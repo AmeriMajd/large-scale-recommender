@@ -11,10 +11,18 @@ requires-python = ">=3.11,<3.13"
 dependencies = []
 
 [project.optional-dependencies]
+data = [
+  "pyspark==4.0.1",
+]
 dev = [
   "pytest>=8,<9",
   "ruff>=0.9,<1",
 ]
+
+[project.scripts]
+recsys-download = "recommender.data.download:main"
+recsys-prepare = "recommender.data.prepare:main"
+recsys-popularity = "recommender.baselines.popularity:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

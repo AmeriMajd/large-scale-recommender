@@ -14,6 +14,7 @@ build/
 # Virtual environments and local configuration
 .venv/
 venv/
+.tools/
 .env
 .env.*
 !.env.example
@@ -47,4 +48,3 @@ triton-models/**/1/
 
 # Notebooks
 .ipynb_checkpoints/
-

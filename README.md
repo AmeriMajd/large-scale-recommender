@@ -12,8 +12,47 @@ nearest-neighbor retrieval, serving, caching, orchestration, and experimentation
 
 ## Current status
 
-Project scaffold and implementation plan created. The first engineering
-milestone is a leak-free temporal data split and a popularity baseline.
+Day 1 is complete: the repository contains reproducible Python/Java environments,
+explicit MovieLens schemas, a leak-free Spark temporal split, ranking metrics,
+and a train-only popularity baseline evaluated on all MovieLens 25M ratings.
+
+### Current baseline
+
+| Metric | Result |
+|---|---:|
+| Training interactions | 19,986,521 |
+| Validation interactions | 2,501,547 |
+| Test interactions | 2,512,027 |
+| Evaluated test users | 18,344 |
+| Popularity Recall@10 | 0.0455 |
+| Popularity NDCG@10 | 0.2408 |
+| Popularity Recall@20 | 0.0732 |
+| Popularity NDCG@20 | 0.2127 |
+
+See [docs/DAY_01_REPORT.md](docs/DAY_01_REPORT.md) for definitions,
+interpretation, and lessons learned.
+
+## Day 1 quick start
+
+Run these commands from the repository root:
+
+```bash
+make setup
+source .venv/bin/activate
+make download
+make prepare
+make baseline
+make test
+```
+
+The commands create isolated Python 3.11 and Java 17 runtimes, download MovieLens
+25M to the ignored `data/raw/` directory, write chronological Parquet splits,
+and save baseline metrics to
+`artifacts/reports/popularity_baseline.json`. Project commands select the local
+Java runtime automatically; they do not modify the system Java installation.
+
+To understand the inputs and leakage controls before running the pipeline, read
+[docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md).
 
 ## System at a glance
 
@@ -65,8 +104,10 @@ The complete design, schedule, evaluation plan, and learning roadmap are in
 - Docker Compose
 
 Python 3.11 is intentional: the host currently has Python 3.14, while the
-documented TensorFlow binary support range is Python 3.9–3.12. The project will
-use an isolated environment or container rather than modify the system Python.
+documented TensorFlow binary support range is Python 3.9–3.12. Java 17 is also
+isolated because Spark's bundled Hadoop libraries are incompatible with the
+host's Java 25 authentication API. The project does not modify either system
+runtime.
 
 ## Dataset
 
@@ -101,4 +142,3 @@ movies from 162,541 users. Raw data must not be committed to Git.
 - [FAISS getting started](https://github.com/facebookresearch/faiss/wiki/Getting-started)
 - [Triton backend documentation](https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/backend/README.html)
 - [Apache Airflow documentation](https://airflow.apache.org/docs/)
-

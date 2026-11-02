@@ -1,0 +1,20 @@
+[data]
+raw_dir = "data/raw/ml-25m"
+processed_dir = "data/processed/ml-25m"
+reports_dir = "artifacts/reports"
+
+[split]
+train_fraction = 0.80
+validation_fraction = 0.10
+test_fraction = 0.10
+quantile_error = 0.001
+
+[baseline]
+positive_rating = 4.0
+recommendation_sizes = [10, 20]
+
+[spark]
+app_name = "large-scale-recommender"
+master = "local[8]"
+shuffle_partitions = 64
+driver_memory = "6g"

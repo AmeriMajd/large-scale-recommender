@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Virtual environments and local configuration
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# IDE and operating-system files
+.idea/
+.vscode/
+.DS_Store
+
+# Data: preserve directory markers only
+data/**
+!data/raw/
+!data/raw/.gitkeep
+!data/processed/
+!data/processed/.gitkeep
+
+# Generated models, indexes, reports, and logs
+artifacts/
+models/
+*.faiss
+*.index
+*.parquet
+mlruns/
+logs/
+airflow.db
+airflow.cfg
+webserver_config.py
+
+# Triton model binaries are generated; keep repository documentation/config
+triton-models/**/1/
+
+# Notebooks
+.ipynb_checkpoints/
+

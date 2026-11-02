@@ -470,6 +470,11 @@ For each milestone:
 This keeps the project educational and makes every repository commit something
 that can be discussed confidently in the final presentation or an interview.
 
+At the end of every implementation day, create a report using
+[`DAY_REPORT_TEMPLATE.md`](DAY_REPORT_TEMPLATE.md). The report must include a
+code walkthrough, every observed failure and its fix, ordered learning
+resources, and practice exercises in addition to engineering results.
+
 ## 18. Environment decision
 
 The development host has 16 CPU cores and approximately 31 GiB RAM, but no
@@ -506,4 +511,3 @@ isolated environment/container. The system Python will not be modified.
 - [Apache Spark documentation](https://spark.apache.org/docs/latest/)
 - [Apache Airflow documentation](https://airflow.apache.org/docs/)
 - [Redis documentation](https://redis.io/docs/latest/)
-

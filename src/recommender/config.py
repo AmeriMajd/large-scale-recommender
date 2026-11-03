@@ -57,6 +57,45 @@ class FeatureConfig:
 
 
 @dataclass(frozen=True)
+class RetrievalConfig:
+    model_dir: Path
+    embedding_dimension: int
+    batch_size: int
+    parquet_batch_size: int
+    shuffle_buffer: int
+    epochs: int
+    learning_rate: float
+    max_train_interactions: int
+    max_validation_users: int
+    evaluation_ks: tuple[int, ...]
+    random_seed: int
+    sampling_modulus: int
+    sampling_buckets: int
+
+    def validate(self) -> None:
+        positive_values = {
+            "embedding_dimension": self.embedding_dimension,
+            "batch_size": self.batch_size,
+            "parquet_batch_size": self.parquet_batch_size,
+            "shuffle_buffer": self.shuffle_buffer,
+            "epochs": self.epochs,
+            "max_train_interactions": self.max_train_interactions,
+            "max_validation_users": self.max_validation_users,
+        }
+        for name, value in positive_values.items():
+            if value <= 0:
+                raise ValueError(f"{name} must be positive")
+        if self.learning_rate <= 0:
+            raise ValueError("learning_rate must be positive")
+        if not self.evaluation_ks or min(self.evaluation_ks) <= 0:
+            raise ValueError("evaluation_ks must contain positive integers")
+        if self.sampling_modulus <= 1:
+            raise ValueError("sampling_modulus must be greater than one")
+        if not 0 < self.sampling_buckets < self.sampling_modulus:
+            raise ValueError("sampling_buckets must be between zero and the modulus")
+
+
+@dataclass(frozen=True)
 class SparkConfig:
     app_name: str
     master: str
@@ -70,6 +109,7 @@ class ProjectConfig:
     split: SplitConfig
     baseline: BaselineConfig
     features: FeatureConfig
+    retrieval: RetrievalConfig
     spark: SparkConfig
 
 
@@ -89,6 +129,24 @@ def load_config(path: str | Path = "configs/base.toml") -> ProjectConfig:
     features = FeatureConfig(**raw["features"])
     features.validate()
 
+    retrieval_raw = raw["retrieval"]
+    retrieval = RetrievalConfig(
+        model_dir=Path(retrieval_raw["model_dir"]),
+        embedding_dimension=retrieval_raw["embedding_dimension"],
+        batch_size=retrieval_raw["batch_size"],
+        parquet_batch_size=retrieval_raw["parquet_batch_size"],
+        shuffle_buffer=retrieval_raw["shuffle_buffer"],
+        epochs=retrieval_raw["epochs"],
+        learning_rate=retrieval_raw["learning_rate"],
+        max_train_interactions=retrieval_raw["max_train_interactions"],
+        max_validation_users=retrieval_raw["max_validation_users"],
+        evaluation_ks=tuple(retrieval_raw["evaluation_ks"]),
+        random_seed=retrieval_raw["random_seed"],
+        sampling_modulus=retrieval_raw["sampling_modulus"],
+        sampling_buckets=retrieval_raw["sampling_buckets"],
+    )
+    retrieval.validate()
+
     return ProjectConfig(
         data=DataConfig(
             raw_dir=Path(raw["data"]["raw_dir"]),
@@ -101,5 +159,6 @@ def load_config(path: str | Path = "configs/base.toml") -> ProjectConfig:
             recommendation_sizes=recommendation_sizes,
         ),
         features=features,
+        retrieval=retrieval,
         spark=SparkConfig(**raw["spark"]),
     )

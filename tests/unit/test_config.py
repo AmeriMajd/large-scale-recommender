@@ -5,7 +5,7 @@ import pytest
 from recommender.config import FeatureConfig, load_config
 
 
-def test_load_config_reads_expected_day_one_values() -> None:
+def test_load_config_reads_expected_values() -> None:
     config = load_config(Path("configs/base.toml"))
 
     assert config.data.raw_dir == Path("data/raw/ml-25m")
@@ -13,6 +13,8 @@ def test_load_config_reads_expected_day_one_values() -> None:
     assert config.baseline.recommendation_sizes == (10, 20)
     assert config.features.recent_window_days == 90
     assert config.features.popularity_buckets == 10
+    assert config.retrieval.embedding_dimension == 64
+    assert config.retrieval.evaluation_ks == (10, 50, 100, 200)
 
 
 @pytest.mark.parametrize(

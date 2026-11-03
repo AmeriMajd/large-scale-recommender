@@ -12,9 +12,10 @@ nearest-neighbor retrieval, serving, caching, orchestration, and experimentation
 
 ## Current status
 
-Day 2 is complete: in addition to the reproducible temporal pipeline and
-popularity baseline, Spark now builds leakage-safe user, item, user–genre, and
-cold-start evaluation tables over all MovieLens 25M ratings.
+Day 3 is complete: the repository now includes the reproducible temporal and
+feature pipelines plus a trained TensorFlow Recommenders two-tower development
+model, exported serving towers, candidate embeddings, and matched offline
+retrieval evaluation.
 
 ### Current baseline
 
@@ -49,6 +50,25 @@ See [docs/FEATURE_CONTRACT.md](docs/FEATURE_CONTRACT.md) for table semantics and
 [docs/DAY_02_REPORT.md](docs/DAY_02_REPORT.md) for the code walkthrough,
 debugging log, tests, exercises, and learning resources.
 
+### Current retrieval experiment
+
+| Metric | Two tower | Matched popularity |
+|---|---:|---:|
+| Recall@10 | 0.0097 | 0.0210 |
+| Recall@50 | 0.0429 | 0.0772 |
+| Recall@100 | 0.0770 | 0.1242 |
+| Recall@200 | 0.1349 | 0.1870 |
+| NDCG@200 | 0.0590 | 0.1028 |
+
+The ID-only development model does not yet beat popularity. That result is
+reported rather than hidden: Day 4 will use the exported `(24,728, 64)` item
+matrix to build and benchmark FAISS, then later experiments will add history,
+genre, and popularity features to the towers.
+
+See [docs/RETRIEVAL_CONTRACT.md](docs/RETRIEVAL_CONTRACT.md) for model and
+evaluation semantics and [docs/DAY_03_REPORT.md](docs/DAY_03_REPORT.md) for the
+full results, code walkthrough, debugging log, and study sequence.
+
 ## Data and feature quick start
 
 Run these commands from the repository root:
@@ -56,18 +76,24 @@ Run these commands from the repository root:
 ```bash
 make setup
 source .venv/bin/activate
+make install-retrieval
 make download
 make prepare
 make features
 make baseline
+make prepare-retrieval
+make train-retrieval
 make test
 ```
 
 The commands create isolated Python 3.11 and Java 17 runtimes, download MovieLens
 25M to the ignored `data/raw/` directory, write chronological Parquet splits,
 write feature tables under `data/processed/ml-25m/features/`, and save local
-audit reports under `artifacts/reports/`. Project commands select the local Java
-runtime automatically; they do not modify the system Java installation.
+audit reports under `artifacts/reports/`. The retrieval commands create a
+coverage-preserving positive sample, train the towers, and export generated
+model artifacts under `artifacts/models/retrieval/`. Project commands select
+the local Java runtime automatically; they do not modify the system Java
+installation.
 
 To understand the inputs and leakage controls before running the pipeline, read
 [docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md).

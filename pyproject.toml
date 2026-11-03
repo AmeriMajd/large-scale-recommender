@@ -14,6 +14,11 @@ dependencies = []
 data = [
   "pyspark==4.0.1",
 ]
+retrieval = [
+  "pyarrow==22.0.0",
+  "tensorflow==2.21.0",
+  "tensorflow-recommenders==0.7.7",
+]
 dev = [
   "pytest>=8,<9",
   "ruff>=0.9,<1",
@@ -24,6 +29,8 @@ recsys-download = "recommender.data.download:main"
 recsys-prepare = "recommender.data.prepare:main"
 recsys-features = "recommender.features.build:main"
 recsys-popularity = "recommender.baselines.popularity:main"
+recsys-prepare-retrieval = "recommender.retrieval.prepare:main"
+recsys-train-retrieval = "recommender.retrieval.train:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

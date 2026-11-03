@@ -5,8 +5,9 @@ export JAVA_HOME
 export PATH := $(JAVA_HOME)/bin:$(PATH)
 export PYSPARK_PYTHON := $(PYTHON)
 export PYSPARK_DRIVER_PYTHON := $(PYTHON)
+export TF_USE_LEGACY_KERAS := 1
 
-.PHONY: setup setup-java install download prepare features baseline test lint check clean-generated
+.PHONY: setup setup-java install install-retrieval download prepare features baseline prepare-retrieval train-retrieval test lint check clean-generated
 
 setup:
 	python3.11 -m venv .venv
@@ -20,6 +21,9 @@ setup-java:
 install:
 	$(PYTHON) -m pip install -e ".[data,dev]"
 
+install-retrieval:
+	$(PYTHON) -m pip install -e ".[retrieval]"
+
 download:
 	$(PYTHON) -m recommender.data.download
 
@@ -31,6 +35,12 @@ features:
 
 baseline:
 	$(PYTHON) -m recommender.baselines.popularity
+
+prepare-retrieval:
+	$(PYTHON) -m recommender.retrieval.prepare
+
+train-retrieval:
+	$(PYTHON) -m recommender.retrieval.train
 
 test:
 	$(PYTHON) -m pytest

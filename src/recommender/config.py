@@ -96,6 +96,41 @@ class RetrievalConfig:
 
 
 @dataclass(frozen=True)
+class IndexingConfig:
+    index_dir: Path
+    query_count: int
+    k: int
+    warmup_queries: int
+    benchmark_repeats: int
+    omp_threads: int
+    hnsw_m: int
+    hnsw_ef_construction: int
+    hnsw_ef_search_values: tuple[int, ...]
+    random_seed: int
+
+    def validate(self) -> None:
+        positive_values = {
+            "query_count": self.query_count,
+            "k": self.k,
+            "benchmark_repeats": self.benchmark_repeats,
+            "omp_threads": self.omp_threads,
+            "hnsw_m": self.hnsw_m,
+            "hnsw_ef_construction": self.hnsw_ef_construction,
+        }
+        for name, value in positive_values.items():
+            if value <= 0:
+                raise ValueError(f"{name} must be positive")
+        if self.warmup_queries < 0:
+            raise ValueError("warmup_queries must not be negative")
+        if not self.hnsw_ef_search_values or min(self.hnsw_ef_search_values) <= 0:
+            raise ValueError("hnsw_ef_search_values must contain positive integers")
+        if tuple(sorted(set(self.hnsw_ef_search_values))) != (
+            self.hnsw_ef_search_values
+        ):
+            raise ValueError("hnsw_ef_search_values must be unique and increasing")
+
+
+@dataclass(frozen=True)
 class SparkConfig:
     app_name: str
     master: str
@@ -110,6 +145,7 @@ class ProjectConfig:
     baseline: BaselineConfig
     features: FeatureConfig
     retrieval: RetrievalConfig
+    indexing: IndexingConfig
     spark: SparkConfig
 
 
@@ -147,6 +183,21 @@ def load_config(path: str | Path = "configs/base.toml") -> ProjectConfig:
     )
     retrieval.validate()
 
+    indexing_raw = raw["indexing"]
+    indexing = IndexingConfig(
+        index_dir=Path(indexing_raw["index_dir"]),
+        query_count=indexing_raw["query_count"],
+        k=indexing_raw["k"],
+        warmup_queries=indexing_raw["warmup_queries"],
+        benchmark_repeats=indexing_raw["benchmark_repeats"],
+        omp_threads=indexing_raw["omp_threads"],
+        hnsw_m=indexing_raw["hnsw_m"],
+        hnsw_ef_construction=indexing_raw["hnsw_ef_construction"],
+        hnsw_ef_search_values=tuple(indexing_raw["hnsw_ef_search_values"]),
+        random_seed=indexing_raw["random_seed"],
+    )
+    indexing.validate()
+
     return ProjectConfig(
         data=DataConfig(
             raw_dir=Path(raw["data"]["raw_dir"]),
@@ -160,5 +211,6 @@ def load_config(path: str | Path = "configs/base.toml") -> ProjectConfig:
         ),
         features=features,
         retrieval=retrieval,
+        indexing=indexing,
         spark=SparkConfig(**raw["spark"]),
     )

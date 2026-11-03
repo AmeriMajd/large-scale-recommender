@@ -32,6 +32,18 @@ random_seed = 42
 sampling_modulus = 10
 sampling_buckets = 1
 
+[indexing]
+index_dir = "artifacts/indexes"
+query_count = 500
+k = 200
+warmup_queries = 25
+benchmark_repeats = 3
+omp_threads = 1
+hnsw_m = 32
+hnsw_ef_construction = 200
+hnsw_ef_search_values = [64, 128, 256, 512]
+random_seed = 42
+
 [spark]
 app_name = "large-scale-recommender"
 master = "local[8]"

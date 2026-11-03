@@ -12,10 +12,10 @@ nearest-neighbor retrieval, serving, caching, orchestration, and experimentation
 
 ## Current status
 
-Day 3 is complete: the repository now includes the reproducible temporal and
-feature pipelines plus a trained TensorFlow Recommenders two-tower development
-model, exported serving towers, candidate embeddings, and matched offline
-retrieval evaluation.
+Day 4 is complete: the repository now includes the reproducible temporal and
+feature pipelines, a trained TensorFlow Recommenders two-tower development
+model, and persistent exact/HNSW FAISS indexes with measured quality, latency,
+throughput, size, and reload correctness.
 
 ### Current baseline
 
@@ -69,6 +69,21 @@ See [docs/RETRIEVAL_CONTRACT.md](docs/RETRIEVAL_CONTRACT.md) for model and
 evaluation semantics and [docs/DAY_03_REPORT.md](docs/DAY_03_REPORT.md) for the
 full results, code walkthrough, debugging log, and study sequence.
 
+### Current FAISS retrieval experiment
+
+| Index / setting | Recall@200 vs exact | P50 ms | P95 ms | Queries/s |
+|---|---:|---:|---:|---:|
+| Exact Flat | 1.0000 | 0.2932 | 0.3196 | 3,622 |
+| HNSW `efSearch=128` | 0.9402 | 0.1824 | 0.2230 | 5,868 |
+| HNSW `efSearch=256` | 0.9859 | 0.2839 | 0.3307 | 3,680 |
+
+The benchmark uses 500 seeded user-tower queries, 24,728 candidates, K=200,
+and one CPU thread. High-recall HNSW is roughly tied with exact search at this
+small catalog size; the lower-depth setting exposes the expected speed/quality
+trade-off. See [docs/INDEX_CONTRACT.md](docs/INDEX_CONTRACT.md) for artifact and
+search semantics and [docs/DAY_04_REPORT.md](docs/DAY_04_REPORT.md) for the full
+benchmark, code walkthrough, debugging log, and learning resources.
+
 ## Data and feature quick start
 
 Run these commands from the repository root:
@@ -77,12 +92,14 @@ Run these commands from the repository root:
 make setup
 source .venv/bin/activate
 make install-retrieval
+make install-indexing
 make download
 make prepare
 make features
 make baseline
 make prepare-retrieval
 make train-retrieval
+make build-index
 make test
 ```
 
@@ -93,7 +110,9 @@ audit reports under `artifacts/reports/`. The retrieval commands create a
 coverage-preserving positive sample, train the towers, and export generated
 model artifacts under `artifacts/models/retrieval/`. Project commands select
 the local Java runtime automatically; they do not modify the system Java
-installation.
+installation. The indexing command writes versioned exact and HNSW artifacts
+under `artifacts/indexes/` and a machine-readable benchmark report under
+`artifacts/reports/`.
 
 To understand the inputs and leakage controls before running the pipeline, read
 [docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md).

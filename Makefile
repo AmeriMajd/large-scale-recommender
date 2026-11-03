@@ -7,7 +7,7 @@ export PYSPARK_PYTHON := $(PYTHON)
 export PYSPARK_DRIVER_PYTHON := $(PYTHON)
 export TF_USE_LEGACY_KERAS := 1
 
-.PHONY: setup setup-java install install-retrieval download prepare features baseline prepare-retrieval train-retrieval test lint check clean-generated
+.PHONY: setup setup-java install install-retrieval install-indexing download prepare features baseline prepare-retrieval train-retrieval build-index test lint check clean-generated
 
 setup:
 	python3.11 -m venv .venv
@@ -23,6 +23,9 @@ install:
 
 install-retrieval:
 	$(PYTHON) -m pip install -e ".[retrieval]"
+
+install-indexing:
+	$(PYTHON) -m pip install -e ".[indexing]"
 
 download:
 	$(PYTHON) -m recommender.data.download
@@ -41,6 +44,9 @@ prepare-retrieval:
 
 train-retrieval:
 	$(PYTHON) -m recommender.retrieval.train
+
+build-index:
+	$(PYTHON) -m recommender.indexing.build
 
 test:
 	$(PYTHON) -m pytest

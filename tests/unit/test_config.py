@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from recommender.config import FeatureConfig, load_config
+from recommender.config import FeatureConfig, IndexingConfig, load_config
 
 
 def test_load_config_reads_expected_values() -> None:
@@ -15,6 +15,8 @@ def test_load_config_reads_expected_values() -> None:
     assert config.features.popularity_buckets == 10
     assert config.retrieval.embedding_dimension == 64
     assert config.retrieval.evaluation_ks == (10, 50, 100, 200)
+    assert config.indexing.k == 200
+    assert config.indexing.hnsw_ef_search_values == (64, 128, 256, 512)
 
 
 @pytest.mark.parametrize(
@@ -62,3 +64,21 @@ driver_memory = "1g"
 
     with pytest.raises(ValueError, match="sum to 1.0"):
         load_config(config_path)
+
+
+def test_indexing_config_requires_ordered_search_values() -> None:
+    config = IndexingConfig(
+        index_dir=Path("indexes"),
+        query_count=10,
+        k=5,
+        warmup_queries=1,
+        benchmark_repeats=1,
+        omp_threads=1,
+        hnsw_m=16,
+        hnsw_ef_construction=40,
+        hnsw_ef_search_values=(32, 16),
+        random_seed=42,
+    )
+
+    with pytest.raises(ValueError, match="unique and increasing"):
+        config.validate()

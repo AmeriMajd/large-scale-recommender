@@ -45,6 +45,18 @@ class BaselineConfig:
 
 
 @dataclass(frozen=True)
+class FeatureConfig:
+    recent_window_days: int
+    popularity_buckets: int
+
+    def validate(self) -> None:
+        if self.recent_window_days <= 0:
+            raise ValueError("recent_window_days must be positive")
+        if self.popularity_buckets <= 1:
+            raise ValueError("popularity_buckets must be greater than one")
+
+
+@dataclass(frozen=True)
 class SparkConfig:
     app_name: str
     master: str
@@ -57,6 +69,7 @@ class ProjectConfig:
     data: DataConfig
     split: SplitConfig
     baseline: BaselineConfig
+    features: FeatureConfig
     spark: SparkConfig
 
 
@@ -73,6 +86,9 @@ def load_config(path: str | Path = "configs/base.toml") -> ProjectConfig:
     if not recommendation_sizes or min(recommendation_sizes) <= 0:
         raise ValueError("recommendation_sizes must contain positive integers")
 
+    features = FeatureConfig(**raw["features"])
+    features.validate()
+
     return ProjectConfig(
         data=DataConfig(
             raw_dir=Path(raw["data"]["raw_dir"]),
@@ -84,5 +100,6 @@ def load_config(path: str | Path = "configs/base.toml") -> ProjectConfig:
             positive_rating=raw["baseline"]["positive_rating"],
             recommendation_sizes=recommendation_sizes,
         ),
+        features=features,
         spark=SparkConfig(**raw["spark"]),
     )

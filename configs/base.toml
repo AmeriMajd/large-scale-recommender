@@ -13,6 +13,10 @@ quantile_error = 0.001
 positive_rating = 4.0
 recommendation_sizes = [10, 20]
 
+[features]
+recent_window_days = 90
+popularity_buckets = 10
+
 [spark]
 app_name = "large-scale-recommender"
 master = "local[8]"

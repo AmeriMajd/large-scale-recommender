@@ -6,7 +6,7 @@ export PATH := $(JAVA_HOME)/bin:$(PATH)
 export PYSPARK_PYTHON := $(PYTHON)
 export PYSPARK_DRIVER_PYTHON := $(PYTHON)
 
-.PHONY: setup setup-java install download prepare baseline test lint check clean-generated
+.PHONY: setup setup-java install download prepare features baseline test lint check clean-generated
 
 setup:
 	python3.11 -m venv .venv
@@ -25,6 +25,9 @@ download:
 
 prepare:
 	$(PYTHON) -m recommender.data.prepare
+
+features:
+	$(PYTHON) -m recommender.features.build
 
 baseline:
 	$(PYTHON) -m recommender.baselines.popularity

@@ -12,9 +12,9 @@ nearest-neighbor retrieval, serving, caching, orchestration, and experimentation
 
 ## Current status
 
-Day 1 is complete: the repository contains reproducible Python/Java environments,
-explicit MovieLens schemas, a leak-free Spark temporal split, ranking metrics,
-and a train-only popularity baseline evaluated on all MovieLens 25M ratings.
+Day 2 is complete: in addition to the reproducible temporal pipeline and
+popularity baseline, Spark now builds leakage-safe user, item, user–genre, and
+cold-start evaluation tables over all MovieLens 25M ratings.
 
 ### Current baseline
 
@@ -32,7 +32,24 @@ and a train-only popularity baseline evaluated on all MovieLens 25M ratings.
 See [docs/DAY_01_REPORT.md](docs/DAY_01_REPORT.md) for definitions,
 interpretation, and lessons learned.
 
-## Day 1 quick start
+### Current feature snapshot
+
+| Table or audit value | Result |
+|---|---:|
+| Feature cutoff | 22 June 2016 UTC |
+| Training users | 137,823 |
+| Catalog items | 62,423 |
+| Items seen in training | 34,444 |
+| User–genre rows | 2,255,079 |
+| Validation unseen users | 12,720 |
+| Test unseen users | 14,407 |
+| Total feature storage | 112 MiB |
+
+See [docs/FEATURE_CONTRACT.md](docs/FEATURE_CONTRACT.md) for table semantics and
+[docs/DAY_02_REPORT.md](docs/DAY_02_REPORT.md) for the code walkthrough,
+debugging log, tests, exercises, and learning resources.
+
+## Data and feature quick start
 
 Run these commands from the repository root:
 
@@ -41,15 +58,16 @@ make setup
 source .venv/bin/activate
 make download
 make prepare
+make features
 make baseline
 make test
 ```
 
 The commands create isolated Python 3.11 and Java 17 runtimes, download MovieLens
 25M to the ignored `data/raw/` directory, write chronological Parquet splits,
-and save baseline metrics to
-`artifacts/reports/popularity_baseline.json`. Project commands select the local
-Java runtime automatically; they do not modify the system Java installation.
+write feature tables under `data/processed/ml-25m/features/`, and save local
+audit reports under `artifacts/reports/`. Project commands select the local Java
+runtime automatically; they do not modify the system Java installation.
 
 To understand the inputs and leakage controls before running the pipeline, read
 [docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md).

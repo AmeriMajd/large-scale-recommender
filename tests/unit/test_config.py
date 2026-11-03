@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from recommender.config import load_config
+from recommender.config import FeatureConfig, load_config
 
 
 def test_load_config_reads_expected_day_one_values() -> None:
@@ -11,6 +11,23 @@ def test_load_config_reads_expected_day_one_values() -> None:
     assert config.data.raw_dir == Path("data/raw/ml-25m")
     assert config.split.train_fraction == 0.8
     assert config.baseline.recommendation_sizes == (10, 20)
+    assert config.features.recent_window_days == 90
+    assert config.features.popularity_buckets == 10
+
+
+@pytest.mark.parametrize(
+    ("recent_window_days", "popularity_buckets", "message"),
+    [(0, 10, "recent_window_days"), (90, 1, "popularity_buckets")],
+)
+def test_feature_config_rejects_invalid_values(
+    recent_window_days: int,
+    popularity_buckets: int,
+    message: str,
+) -> None:
+    config = FeatureConfig(recent_window_days, popularity_buckets)
+
+    with pytest.raises(ValueError, match=message):
+        config.validate()
 
 
 def test_split_fractions_must_sum_to_one(tmp_path: Path) -> None:
@@ -29,6 +46,9 @@ quantile_error = 0.0
 [baseline]
 positive_rating = 4.0
 recommendation_sizes = [10]
+[features]
+recent_window_days = 90
+popularity_buckets = 10
 [spark]
 app_name = "test"
 master = "local[1]"

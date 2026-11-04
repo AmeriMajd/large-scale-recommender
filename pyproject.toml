@@ -35,6 +35,8 @@ recsys-popularity = "recommender.baselines.popularity:main"
 recsys-prepare-retrieval = "recommender.retrieval.prepare:main"
 recsys-train-retrieval = "recommender.retrieval.train:main"
 recsys-build-index = "recommender.indexing.build:main"
+recsys-prepare-ranking = "recommender.ranking.prepare:main"
+recsys-train-ranking = "recommender.ranking.train:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -12,10 +12,9 @@ nearest-neighbor retrieval, serving, caching, orchestration, and experimentation
 
 ## Current status
 
-Day 4 is complete: the repository now includes the reproducible temporal and
-feature pipelines, a trained TensorFlow Recommenders two-tower development
-model, and persistent exact/HNSW FAISS indexes with measured quality, latency,
-throughput, size, and reload correctness.
+Day 5 is complete: the repository now includes the reproducible temporal and
+feature pipelines, two-tower retrieval, persistent exact/HNSW FAISS indexes,
+and two exported deep ranking models evaluated on future candidate lists.
 
 ### Current baseline
 
@@ -84,6 +83,22 @@ trade-off. See [docs/INDEX_CONTRACT.md](docs/INDEX_CONTRACT.md) for artifact and
 search semantics and [docs/DAY_04_REPORT.md](docs/DAY_04_REPORT.md) for the full
 benchmark, code walkthrough, debugging log, and learning resources.
 
+### Current ranking experiment
+
+| Candidate order | Recall@10 | NDCG@10 | Recall@50 | NDCG@50 |
+|---|---:|---:|---:|---:|
+| Raw retrieval | 0.0097 | 0.0178 | 0.0429 | 0.0286 |
+| Popularity | 0.0289 | 0.0713 | 0.0837 | 0.0697 |
+| Wide & Deep | 0.0303 | 0.0740 | 0.0884 | 0.0744 |
+| DCN | **0.0324** | **0.0753** | **0.0888** | **0.0748** |
+
+DCN is selected by future-validation NDCG@10 after early stopping restores its
+best validation-AUC epoch. The comparison uses 500 users and the same 200
+retrieved candidates per user. See [docs/RANKING_CONTRACT.md](docs/RANKING_CONTRACT.md)
+for labels, features, export, and evaluation semantics and
+[docs/DAY_05_REPORT.md](docs/DAY_05_REPORT.md) for the full results, debugging
+log, code walkthrough, exercises, and study resources.
+
 ## Data and feature quick start
 
 Run these commands from the repository root:
@@ -100,6 +115,8 @@ make baseline
 make prepare-retrieval
 make train-retrieval
 make build-index
+make prepare-ranking
+make train-ranking
 make test
 ```
 
@@ -112,7 +129,9 @@ model artifacts under `artifacts/models/retrieval/`. Project commands select
 the local Java runtime automatically; they do not modify the system Java
 installation. The indexing command writes versioned exact and HNSW artifacts
 under `artifacts/indexes/` and a machine-readable benchmark report under
-`artifacts/reports/`.
+`artifacts/reports/`. Ranking preparation writes ignored Parquet examples under
+`data/processed/ml-25m/ranking/`; training exports both rankers under
+`artifacts/models/ranking/`.
 
 To understand the inputs and leakage controls before running the pipeline, read
 [docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md).

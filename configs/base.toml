@@ -44,6 +44,23 @@ hnsw_ef_construction = 200
 hnsw_ef_search_values = [64, 128, 256, 512]
 random_seed = 42
 
+[ranking]
+model_dir = "artifacts/models/ranking"
+max_training_positives = 200000
+negatives_per_positive = 3
+candidate_k = 200
+max_validation_users = 500
+parquet_batch_size = 65536
+batch_size = 1024
+epochs = 3
+early_stopping_patience = 1
+learning_rate = 0.001
+id_embedding_dimension = 16
+deep_layer_sizes = [128, 64]
+cross_layers = 2
+evaluation_ks = [10, 50]
+random_seed = 42
+
 [spark]
 app_name = "large-scale-recommender"
 master = "local[8]"

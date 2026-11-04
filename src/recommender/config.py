@@ -131,6 +131,51 @@ class IndexingConfig:
 
 
 @dataclass(frozen=True)
+class RankingConfig:
+    model_dir: Path
+    max_training_positives: int
+    negatives_per_positive: int
+    candidate_k: int
+    max_validation_users: int
+    parquet_batch_size: int
+    batch_size: int
+    epochs: int
+    early_stopping_patience: int
+    learning_rate: float
+    id_embedding_dimension: int
+    deep_layer_sizes: tuple[int, ...]
+    cross_layers: int
+    evaluation_ks: tuple[int, ...]
+    random_seed: int
+
+    def validate(self) -> None:
+        positive_values = {
+            "max_training_positives": self.max_training_positives,
+            "negatives_per_positive": self.negatives_per_positive,
+            "candidate_k": self.candidate_k,
+            "max_validation_users": self.max_validation_users,
+            "parquet_batch_size": self.parquet_batch_size,
+            "batch_size": self.batch_size,
+            "epochs": self.epochs,
+            "id_embedding_dimension": self.id_embedding_dimension,
+            "cross_layers": self.cross_layers,
+        }
+        for name, value in positive_values.items():
+            if value <= 0:
+                raise ValueError(f"{name} must be positive")
+        if self.learning_rate <= 0:
+            raise ValueError("learning_rate must be positive")
+        if self.early_stopping_patience < 0:
+            raise ValueError("early_stopping_patience must not be negative")
+        if not self.deep_layer_sizes or min(self.deep_layer_sizes) <= 0:
+            raise ValueError("deep_layer_sizes must contain positive integers")
+        if not self.evaluation_ks or min(self.evaluation_ks) <= 0:
+            raise ValueError("evaluation_ks must contain positive integers")
+        if max(self.evaluation_ks) > self.candidate_k:
+            raise ValueError("ranking evaluation K cannot exceed candidate_k")
+
+
+@dataclass(frozen=True)
 class SparkConfig:
     app_name: str
     master: str
@@ -146,6 +191,7 @@ class ProjectConfig:
     features: FeatureConfig
     retrieval: RetrievalConfig
     indexing: IndexingConfig
+    ranking: RankingConfig
     spark: SparkConfig
 
 
@@ -198,6 +244,26 @@ def load_config(path: str | Path = "configs/base.toml") -> ProjectConfig:
     )
     indexing.validate()
 
+    ranking_raw = raw["ranking"]
+    ranking = RankingConfig(
+        model_dir=Path(ranking_raw["model_dir"]),
+        max_training_positives=ranking_raw["max_training_positives"],
+        negatives_per_positive=ranking_raw["negatives_per_positive"],
+        candidate_k=ranking_raw["candidate_k"],
+        max_validation_users=ranking_raw["max_validation_users"],
+        parquet_batch_size=ranking_raw["parquet_batch_size"],
+        batch_size=ranking_raw["batch_size"],
+        epochs=ranking_raw["epochs"],
+        early_stopping_patience=ranking_raw["early_stopping_patience"],
+        learning_rate=ranking_raw["learning_rate"],
+        id_embedding_dimension=ranking_raw["id_embedding_dimension"],
+        deep_layer_sizes=tuple(ranking_raw["deep_layer_sizes"]),
+        cross_layers=ranking_raw["cross_layers"],
+        evaluation_ks=tuple(ranking_raw["evaluation_ks"]),
+        random_seed=ranking_raw["random_seed"],
+    )
+    ranking.validate()
+
     return ProjectConfig(
         data=DataConfig(
             raw_dir=Path(raw["data"]["raw_dir"]),
@@ -212,5 +278,6 @@ def load_config(path: str | Path = "configs/base.toml") -> ProjectConfig:
         features=features,
         retrieval=retrieval,
         indexing=indexing,
+        ranking=ranking,
         spark=SparkConfig(**raw["spark"]),
     )

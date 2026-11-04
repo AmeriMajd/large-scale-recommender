@@ -1,1 +1,1 @@
-"""Second-stage ranking models and training data generation."""
+"""Second-stage candidate ranking models and data pipelines."""

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from recommender.config import FeatureConfig, IndexingConfig, load_config
+from recommender.config import FeatureConfig, IndexingConfig, RankingConfig, load_config
 
 
 def test_load_config_reads_expected_values() -> None:
@@ -17,6 +17,8 @@ def test_load_config_reads_expected_values() -> None:
     assert config.retrieval.evaluation_ks == (10, 50, 100, 200)
     assert config.indexing.k == 200
     assert config.indexing.hnsw_ef_search_values == (64, 128, 256, 512)
+    assert config.ranking.candidate_k == 200
+    assert config.ranking.deep_layer_sizes == (128, 64)
 
 
 @pytest.mark.parametrize(
@@ -81,4 +83,27 @@ def test_indexing_config_requires_ordered_search_values() -> None:
     )
 
     with pytest.raises(ValueError, match="unique and increasing"):
+        config.validate()
+
+
+def test_ranking_metric_k_cannot_exceed_candidate_count() -> None:
+    config = RankingConfig(
+        model_dir=Path("models"),
+        max_training_positives=10,
+        negatives_per_positive=2,
+        candidate_k=10,
+        max_validation_users=5,
+        parquet_batch_size=10,
+        batch_size=4,
+        epochs=1,
+        early_stopping_patience=0,
+        learning_rate=0.001,
+        id_embedding_dimension=4,
+        deep_layer_sizes=(8,),
+        cross_layers=1,
+        evaluation_ks=(5, 20),
+        random_seed=42,
+    )
+
+    with pytest.raises(ValueError, match="cannot exceed"):
         config.validate()

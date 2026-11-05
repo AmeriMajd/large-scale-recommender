@@ -75,6 +75,7 @@ class FeatureStore:
             columns=[
                 "movieId",
                 "title",
+                "genre_list",
                 "interaction_count",
                 "mean_rating",
                 "positive_rate",
@@ -88,6 +89,37 @@ class FeatureStore:
     def title(self, movie_id: int) -> str:
         row = self.items.get(movie_id)
         return str(row["title"]) if row else f"Movie {movie_id}"
+
+    def search(self, query: str, limit: int) -> list[dict]:
+        """Find popular catalog titles for the cold-start picker."""
+        normalized = query.strip().casefold()
+        if not normalized:
+            return []
+        matches = [
+            row
+            for row in self.items.values()
+            if normalized in str(row["title"]).casefold()
+        ]
+        matches.sort(
+            key=lambda row: (
+                not str(row["title"]).casefold().startswith(normalized),
+                (
+                    float(row["popularity_percentile"])
+                    if row["popularity_percentile"] is not None
+                    else 1.0
+                ),
+                str(row["title"]).casefold(),
+                int(row["movieId"]),
+            )
+        )
+        return [
+            {
+                "movie_id": int(row["movieId"]),
+                "title": str(row["title"]),
+                "genres": list(row["genre_list"] or ()),
+            }
+            for row in matches[:limit]
+        ]
 
     def ranker_inputs(
         self,
@@ -368,6 +400,12 @@ class RecommendationEngine:
             recommendations=recommendations,
             cache_hit=False,
         )
+
+    def search_movies(self, query: str, limit: int = 8) -> list[dict]:
+        """Expose bounded catalog search without leaking feature internals."""
+        if limit <= 0:
+            raise ValueError("search limit must be positive")
+        return self.features.search(query, min(limit, 20))
 
     def health(self) -> dict:
         return {

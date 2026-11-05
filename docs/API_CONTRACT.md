@@ -9,9 +9,10 @@ make serve
 ```
 
 The default address is `http://127.0.0.1:8000`; interactive OpenAPI docs are at
-`/docs`. Startup loads the latest successful retrieval, exact FAISS, and both
-ranking SavedModel artifacts. Day 8 will replace direct TensorFlow calls with
-Triton; the HTTP contract is intentionally independent of that adapter.
+`/docs`, and the Recommender Lab interface is served at `/`. Startup loads the
+latest successful retrieval, exact FAISS, and both ranking SavedModel artifacts.
+The HTTP contract is independent of whether local TensorFlow or Triton provides
+inference.
 
 ## Endpoints
 
@@ -20,6 +21,7 @@ Triton; the HTTP contract is intentionally independent of that adapter.
 | `GET /health` | Artifact identity, catalog sizes, and Redis health |
 | `GET /recommendations/{user_id}?limit=10` | Known-user two-stage recommendations; unknown IDs route to cold start |
 | `POST /recommendations/cold-start` | Session recommendations from genres and/or liked movie IDs |
+| `GET /catalog/search?q=toy&limit=8` | Bounded title search for the cold-start movie picker |
 | `POST /events/impression` | Explicitly record an externally displayed list |
 | `POST /events/click` | Record a click only when its movie appeared in that impression |
 | `GET /experiments/{experiment_id}/metrics` | Per-variant impressions, unique clicked impressions, CTR, and position-discounted clicks |
@@ -70,4 +72,3 @@ MovieLens CTR.
 - Redis cache errors do not fail recommendation requests.
 - Artifact-loading errors fail startup instead of silently serving a partial
   model stack.
-

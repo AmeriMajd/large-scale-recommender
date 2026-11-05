@@ -37,6 +37,11 @@ class FakeEngine:
             "recommendations": [{"movie_id": 20}] * (limit or 10),
         }
 
+    def search_movies(self, query: str, limit: int = 8) -> list[dict]:
+        return [
+            {"movie_id": 10, "title": f"{query} Movie", "genres": ["Action"]}
+        ][:limit]
+
 
 def test_health_known_and_cold_start_endpoints() -> None:
     client = TestClient(create_app(FakeEngine()))
@@ -56,6 +61,12 @@ def test_health_known_and_cold_start_endpoints() -> None:
     )
     assert cold.status_code == 200
     assert cold.json()["strategy"] == "genre_content_popularity"
+    search = client.get("/catalog/search?q=sample&limit=2")
+    assert search.status_code == 200
+    assert search.json()["results"][0]["title"] == "sample Movie"
+    home = client.get("/")
+    assert home.status_code == 200
+    assert "Recommender Lab" in home.text
 
 
 def test_impression_click_and_metrics_round_trip() -> None:

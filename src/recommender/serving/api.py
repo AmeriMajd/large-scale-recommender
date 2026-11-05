@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Protocol
 
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
+from starlette.staticfiles import StaticFiles
 
 from recommender.config import load_config
 
@@ -23,6 +25,8 @@ class EngineProtocol(Protocol):
         liked_movie_ids: tuple[int, ...] = (),
         limit: int | None = None,
     ) -> dict: ...
+
+    def search_movies(self, query: str, limit: int = 8) -> list[dict]: ...
 
     def health(self) -> dict: ...
 
@@ -74,6 +78,13 @@ def create_app(engine: EngineProtocol) -> FastAPI:
             limit=request.limit,
         )
 
+    @app.get("/catalog/search")
+    def catalog_search(
+        q: str = Query(min_length=1, max_length=100),
+        limit: int = Query(default=8, ge=1, le=20),
+    ) -> dict:
+        return {"results": engine.search_movies(q, limit)}
+
     @app.post("/events/impression", status_code=201)
     def impression(request: ImpressionRequest) -> dict:
         value = engine.experiments.record_impression(
@@ -104,6 +115,10 @@ def create_app(engine: EngineProtocol) -> FastAPI:
     @app.get("/experiments/{experiment_id}/metrics")
     def experiment_metrics(experiment_id: str) -> dict:
         return engine.experiments.metrics(experiment_id)
+
+    ui_dir = Path(__file__).resolve().parents[3] / "app"
+    if ui_dir.is_dir():
+        app.mount("/", StaticFiles(directory=ui_dir, html=True), name="ui")
 
     return app
 

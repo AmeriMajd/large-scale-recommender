@@ -16,9 +16,10 @@ Days 1–10 are implemented: the repository includes the reproducible temporal
 and feature pipelines, two-tower retrieval, persistent exact/HNSW FAISS
 indexes, two exported deep rankers, cold-start fallbacks, versioned Redis
 caching, a tested recommendation/feedback API, Triton model-repository and
-client integration, and a ten-stage Airflow retraining DAG. Redis and the
-Airflow DAG have been tested live in their pinned containers. The large Triton
-container run remains pending and is not presented as completed evidence.
+client integration, a responsive recommendation demo, and a ten-stage Airflow
+retraining DAG. Redis and the Airflow DAG have been tested live in their pinned
+containers. The large Triton container run remains pending and is not presented
+as completed evidence.
 
 ### Current baseline
 
@@ -161,6 +162,8 @@ After the model and index artifacts exist, start the local HTTP service with:
 make serve
 ```
 
+Open `http://127.0.0.1:8000` for the Recommender Lab demo. It includes known-user
+ranking, cold-start taste selection, click recording, and live A/B metrics.
 Open `http://127.0.0.1:8000/docs` for the interactive API contract, or run
 `make benchmark-serving` to reproduce the local miss/hit latency report.
 

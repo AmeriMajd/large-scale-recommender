@@ -128,6 +128,9 @@ def test_serving_candidate_count_must_cover_response_limit() -> None:
         model_namespace="recs",
         api_host="127.0.0.1",
         api_port=8000,
+        inference_backend="local",
+        triton_http_url="http://127.0.0.1:8001",
+        triton_timeout_seconds=5.0,
     )
 
     with pytest.raises(ValueError, match="cannot be smaller"):

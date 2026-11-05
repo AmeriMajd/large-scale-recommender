@@ -71,6 +71,9 @@ experiment_id = "ranking-model-v1"
 model_namespace = "movie-recs"
 api_host = "127.0.0.1"
 api_port = 8000
+inference_backend = "local"
+triton_http_url = "http://127.0.0.1:8001"
+triton_timeout_seconds = 10.0
 
 [spark]
 app_name = "large-scale-recommender"

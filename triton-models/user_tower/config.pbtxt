@@ -1,0 +1,13 @@
+name: "user_tower"
+platform: "tensorflow_savedmodel"
+max_batch_size: 0
+input [
+  { name: "user_id" data_type: TYPE_INT64 dims: [ -1 ] }
+]
+output [
+  { name: "embedding" data_type: TYPE_FP32 dims: [ -1, 64 ] }
+]
+instance_group [
+  { kind: KIND_CPU count: 1 }
+]
+version_policy: { specific: { versions: 1 } }

@@ -186,6 +186,9 @@ class ServingConfig:
     model_namespace: str
     api_host: str
     api_port: int
+    inference_backend: str
+    triton_http_url: str
+    triton_timeout_seconds: float
 
     def validate(self) -> None:
         positive_values = {
@@ -194,6 +197,7 @@ class ServingConfig:
             "recommendation_limit": self.recommendation_limit,
             "retrieval_candidate_k": self.retrieval_candidate_k,
             "api_port": self.api_port,
+            "triton_timeout_seconds": self.triton_timeout_seconds,
         }
         for name, value in positive_values.items():
             if value <= 0:
@@ -202,6 +206,10 @@ class ServingConfig:
             raise ValueError("retrieval_candidate_k cannot be smaller than the limit")
         if not self.redis_url.startswith(("redis://", "rediss://")):
             raise ValueError("redis_url must use redis:// or rediss://")
+        if self.inference_backend not in {"local", "triton"}:
+            raise ValueError("inference_backend must be local or triton")
+        if not self.triton_http_url.startswith(("http://", "https://")):
+            raise ValueError("triton_http_url must use http:// or https://")
         for name in ("experiment_id", "model_namespace", "api_host"):
             if not getattr(self, name).strip():
                 raise ValueError(f"{name} must not be empty")

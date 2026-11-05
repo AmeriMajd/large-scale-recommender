@@ -7,32 +7,31 @@ import math
 import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
 
 import faiss
 import numpy as np
 import pyarrow.dataset as pads
 
-os.environ.setdefault("TF_USE_LEGACY_KERAS", "1")
-os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
-
-import tensorflow as tf  # noqa: E402
-
-from recommender.config import ProjectConfig, load_config  # noqa: E402
-from recommender.serving.cache import (  # noqa: E402
+from recommender.config import ProjectConfig, load_config
+from recommender.serving.cache import (
     RecommendationCache,
     RedisKeyValueBackend,
     build_cache_key,
 )
-from recommender.serving.cold_start import (  # noqa: E402
+from recommender.serving.cold_start import (
     ColdStartRecommender,
     load_catalog,
 )
-from recommender.serving.experiment import (  # noqa: E402
+from recommender.serving.experiment import (
     ExperimentStore,
     InMemoryExperimentStore,
     RedisExperimentStore,
     assign_variant,
+)
+from recommender.serving.inference import (
+    InferenceBackend,
+    LocalTensorFlowInference,
+    TritonHttpInference,
 )
 
 
@@ -95,7 +94,7 @@ class FeatureStore:
         user_id: int,
         movie_ids: np.ndarray,
         retrieval_scores: np.ndarray,
-    ) -> dict[str, tf.Tensor]:
+    ) -> dict[str, np.ndarray]:
         user = self.users[user_id]
         item_rows = [self.items[int(movie_id)] for movie_id in movie_ids]
         count = len(movie_ids)
@@ -105,47 +104,41 @@ class FeatureStore:
 
         user_recency = max(int(user["days_since_last_interaction"] or 0), 0)
         return {
-            "user_id": tf.constant(np.full(count, user_id, dtype=np.int64)),
-            "movie_id": tf.constant(movie_ids.astype(np.int64, copy=False)),
-            "user_log_interactions": tf.constant(
-                repeated(math.log1p(int(user["interaction_count"])) / 15.0)
+            "user_id": np.full(count, user_id, dtype=np.int64),
+            "movie_id": movie_ids.astype(np.int64, copy=False),
+            "user_log_interactions": repeated(
+                math.log1p(int(user["interaction_count"])) / 15.0
             ),
-            "user_mean_rating": tf.constant(
-                repeated(float(user["mean_rating"] or 0.0) / 5.0)
-            ),
-            "user_positive_rate": tf.constant(
-                repeated(float(user["positive_rate"] or 0.0))
-            ),
-            "user_log_recency": tf.constant(
-                repeated(math.log1p(user_recency) / 12.0)
-            ),
-            "item_log_interactions": tf.constant(
+            "user_mean_rating": repeated(float(user["mean_rating"] or 0.0) / 5.0),
+            "user_positive_rate": repeated(float(user["positive_rate"] or 0.0)),
+            "user_log_recency": repeated(math.log1p(user_recency) / 12.0),
+            "item_log_interactions": np.asarray(
                 [math.log1p(int(row["interaction_count"])) / 15.0 for row in item_rows],
-                dtype=tf.float32,
+                dtype=np.float32,
             ),
-            "item_mean_rating": tf.constant(
+            "item_mean_rating": np.asarray(
                 [float(row["mean_rating"] or 0.0) / 5.0 for row in item_rows],
-                dtype=tf.float32,
+                dtype=np.float32,
             ),
-            "item_positive_rate": tf.constant(
+            "item_positive_rate": np.asarray(
                 [float(row["positive_rate"] or 0.0) for row in item_rows],
-                dtype=tf.float32,
+                dtype=np.float32,
             ),
-            "item_popularity_score": tf.constant(
+            "item_popularity_score": np.asarray(
                 [
                     1.0 - float(row["popularity_percentile"] or 0.0)
                     for row in item_rows
                 ],
-                dtype=tf.float32,
+                dtype=np.float32,
             ),
-            "item_log_age": tf.constant(
+            "item_log_age": np.asarray(
                 [
                     math.log1p(max(int(row["movie_age_years"] or 0), 0)) / 8.0
                     for row in item_rows
                 ],
-                dtype=tf.float32,
+                dtype=np.float32,
             ),
-            "retrieval_score": tf.constant(retrieval_scores, dtype=tf.float32),
+            "retrieval_score": retrieval_scores.astype(np.float32, copy=False),
         }
 
 
@@ -178,9 +171,8 @@ class RecommendationEngine:
         experiments: ExperimentStore,
         model_version: str,
         user_ids: np.ndarray,
-        user_tower: Any,
         index: faiss.Index,
-        rankers: dict[str, Any],
+        inference: InferenceBackend,
         feature_store: FeatureStore,
         seen_items: SeenItemsRepository,
         cold_start: ColdStartRecommender,
@@ -190,9 +182,8 @@ class RecommendationEngine:
         self.experiments = experiments
         self.model_version = model_version
         self.known_user_ids = frozenset(int(value) for value in user_ids)
-        self.user_tower = user_tower
         self.index = index
-        self.rankers = rankers
+        self.inference = inference
         self.features = feature_store
         self.seen_items = seen_items
         self.cold_start = cold_start
@@ -215,7 +206,7 @@ class RecommendationEngine:
         try:
             experiment_id = (
                 self.config.serving.experiment_id
-                if variant in self.rankers
+                if variant in self.inference.ranker_names
                 else "cold-start-fallback"
             )
             impression = self.experiments.record_impression(
@@ -281,9 +272,7 @@ class RecommendationEngine:
             )
 
         seen = self.seen_items.get(user_id)
-        embedding = self.user_tower(
-            user_id=tf.constant([user_id], dtype=tf.int64)
-        )["embedding"].numpy()
+        embedding = self.inference.user_embedding(user_id)
         candidate_k = self.config.serving.retrieval_candidate_k
         fetch_k = min(self.index.ntotal, candidate_k + len(seen))
         distances, movie_ids = self.index.search(
@@ -303,7 +292,7 @@ class RecommendationEngine:
         features = self.features.ranker_inputs(
             user_id, candidate_ids, retrieval_scores
         )
-        logits = self.rankers[variant](**features)["logit"].numpy()
+        logits = self.inference.ranker_logits(variant, features)
         order = np.lexsort((candidate_ids, -logits))[:requested_limit]
         recommendations = [
             asdict(
@@ -387,6 +376,7 @@ class RecommendationEngine:
             "known_users": len(self.known_user_ids),
             "indexed_items": self.index.ntotal,
             "cache_healthy": self.cache.healthy(),
+            "inference": self.inference.health(),
         }
 
 
@@ -406,16 +396,26 @@ def build_default_engine(
         (index_dir / "index_report.json").read_text(encoding="utf-8")
     )
     index = faiss.read_index(index_report["exact"]["artifact"]["path"])
-    user_tower = tf.saved_model.load(str(retrieval_dir / "user_tower")).signatures[
-        "serving_default"
-    ]
-    rankers = {
-        name: tf.saved_model.load(str(ranking_dir / name)).signatures[
-            "serving_default"
-        ]
-        for name in ("wide_and_deep", "dcn")
-    }
-    redis_backend = RedisKeyValueBackend(project.serving.redis_url)
+    backend_name = os.getenv(
+        "RECSYS_INFERENCE_BACKEND", project.serving.inference_backend
+    )
+    if backend_name == "local":
+        inference: InferenceBackend = LocalTensorFlowInference.load(
+            retrieval_dir / "user_tower", ranking_dir
+        )
+    elif backend_name == "triton":
+        inference = TritonHttpInference(
+            os.getenv("RECSYS_TRITON_HTTP_URL", project.serving.triton_http_url),
+            project.serving.triton_timeout_seconds,
+        )
+        health = inference.health()
+        if not health["ready"]:
+            raise RuntimeError(f"Triton is not ready: {health}")
+    else:
+        raise ValueError("RECSYS_INFERENCE_BACKEND must be local or triton")
+    redis_backend = RedisKeyValueBackend(
+        os.getenv("RECSYS_REDIS_URL", project.serving.redis_url)
+    )
     cache = RecommendationCache(redis_backend, project.serving.cache_ttl_seconds)
     if cache.healthy():
         experiments: ExperimentStore = RedisExperimentStore(
@@ -432,9 +432,8 @@ def build_default_engine(
         experiments=experiments,
         model_version=f"{retrieval_id}+{ranking_id}",
         user_ids=np.load(retrieval_dir / "user_ids.npy", allow_pickle=False),
-        user_tower=user_tower,
         index=index,
-        rankers=rankers,
+        inference=inference,
         feature_store=FeatureStore(feature_dir),
         seen_items=SeenItemsRepository(project.data.processed_dir / "ratings_train"),
         cold_start=ColdStartRecommender(load_catalog(feature_dir / "item_features")),

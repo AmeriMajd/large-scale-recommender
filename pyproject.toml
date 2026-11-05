@@ -45,6 +45,8 @@ recsys-prepare-ranking = "recommender.ranking.prepare:main"
 recsys-train-ranking = "recommender.ranking.train:main"
 recsys-serve = "recommender.serving.api:main"
 recsys-benchmark-serving = "recommender.serving.benchmark:main"
+recsys-export-triton = "recommender.serving.triton_repository:main"
+recsys-verify-triton = "recommender.serving.verify_triton:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

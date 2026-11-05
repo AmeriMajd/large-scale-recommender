@@ -1,0 +1,24 @@
+{
+  "generated_at_utc": "2026-11-05T14:50:19.133059+00:00",
+  "repository": "triton-models",
+  "triton_container": "nvcr.io/nvidia/tritonserver:25.02-py3",
+  "retrieval_run_id": "cutoff-1466573687-seed-42-20261103T200303Z",
+  "ranking_run_id": "cutoff-1466573687-seed-42-20261103T200303Z-ranking-seed-42-20261104T223813Z",
+  "models": {
+    "user_tower": {
+      "source": "artifacts/models/retrieval/cutoff-1466573687-seed-42-20261103T200303Z/user_tower",
+      "destination": "triton-models/user_tower/1/model.savedmodel",
+      "saved_model_sha256": "093b4e8b4b201ba7a0f7e5cc4c5f19d7a85c380abd05bae94e6af0fa181693c3"
+    },
+    "wide_and_deep": {
+      "source": "artifacts/models/ranking/cutoff-1466573687-seed-42-20261103T200303Z-ranking-seed-42-20261104T223813Z/wide_and_deep",
+      "destination": "triton-models/wide_and_deep/1/model.savedmodel",
+      "saved_model_sha256": "b2207e517c93847cf92efd7033fa6d36f5b55bad409dda0bb1e23c7718dd51d4"
+    },
+    "dcn": {
+      "source": "artifacts/models/ranking/cutoff-1466573687-seed-42-20261103T200303Z-ranking-seed-42-20261104T223813Z/dcn",
+      "destination": "triton-models/dcn/1/model.savedmodel",
+      "saved_model_sha256": "62d4a1ceb766762b4b6957483850ac3e16b111ab87832006eb43edfa2f702568"
+    }
+  }
+}

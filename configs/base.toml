@@ -61,6 +61,17 @@ cross_layers = 2
 evaluation_ks = [10, 50]
 random_seed = 42
 
+[serving]
+redis_url = "redis://localhost:6379/0"
+cache_ttl_seconds = 900
+event_stream_maxlen = 100000
+recommendation_limit = 10
+retrieval_candidate_k = 200
+experiment_id = "ranking-model-v1"
+model_namespace = "movie-recs"
+api_host = "127.0.0.1"
+api_port = 8000
+
 [spark]
 app_name = "large-scale-recommender"
 master = "local[8]"

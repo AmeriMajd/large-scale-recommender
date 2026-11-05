@@ -176,6 +176,38 @@ class RankingConfig:
 
 
 @dataclass(frozen=True)
+class ServingConfig:
+    redis_url: str
+    cache_ttl_seconds: int
+    event_stream_maxlen: int
+    recommendation_limit: int
+    retrieval_candidate_k: int
+    experiment_id: str
+    model_namespace: str
+    api_host: str
+    api_port: int
+
+    def validate(self) -> None:
+        positive_values = {
+            "cache_ttl_seconds": self.cache_ttl_seconds,
+            "event_stream_maxlen": self.event_stream_maxlen,
+            "recommendation_limit": self.recommendation_limit,
+            "retrieval_candidate_k": self.retrieval_candidate_k,
+            "api_port": self.api_port,
+        }
+        for name, value in positive_values.items():
+            if value <= 0:
+                raise ValueError(f"{name} must be positive")
+        if self.retrieval_candidate_k < self.recommendation_limit:
+            raise ValueError("retrieval_candidate_k cannot be smaller than the limit")
+        if not self.redis_url.startswith(("redis://", "rediss://")):
+            raise ValueError("redis_url must use redis:// or rediss://")
+        for name in ("experiment_id", "model_namespace", "api_host"):
+            if not getattr(self, name).strip():
+                raise ValueError(f"{name} must not be empty")
+
+
+@dataclass(frozen=True)
 class SparkConfig:
     app_name: str
     master: str
@@ -192,6 +224,7 @@ class ProjectConfig:
     retrieval: RetrievalConfig
     indexing: IndexingConfig
     ranking: RankingConfig
+    serving: ServingConfig
     spark: SparkConfig
 
 
@@ -264,6 +297,9 @@ def load_config(path: str | Path = "configs/base.toml") -> ProjectConfig:
     )
     ranking.validate()
 
+    serving = ServingConfig(**raw["serving"])
+    serving.validate()
+
     return ProjectConfig(
         data=DataConfig(
             raw_dir=Path(raw["data"]["raw_dir"]),
@@ -279,5 +315,6 @@ def load_config(path: str | Path = "configs/base.toml") -> ProjectConfig:
         retrieval=retrieval,
         indexing=indexing,
         ranking=ranking,
+        serving=serving,
         spark=SparkConfig(**raw["spark"]),
     )

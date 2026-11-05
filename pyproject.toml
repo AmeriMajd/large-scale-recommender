@@ -22,6 +22,9 @@ retrieval = [
 indexing = [
   "faiss-cpu==1.15.1",
 ]
+serving = [
+  "redis==8.1.0",
+]
 dev = [
   "pytest>=8,<9",
   "ruff>=0.9,<1",

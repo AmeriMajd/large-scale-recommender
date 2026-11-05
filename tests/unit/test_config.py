@@ -2,7 +2,13 @@ from pathlib import Path
 
 import pytest
 
-from recommender.config import FeatureConfig, IndexingConfig, RankingConfig, load_config
+from recommender.config import (
+    FeatureConfig,
+    IndexingConfig,
+    RankingConfig,
+    ServingConfig,
+    load_config,
+)
 
 
 def test_load_config_reads_expected_values() -> None:
@@ -19,6 +25,8 @@ def test_load_config_reads_expected_values() -> None:
     assert config.indexing.hnsw_ef_search_values == (64, 128, 256, 512)
     assert config.ranking.candidate_k == 200
     assert config.ranking.deep_layer_sizes == (128, 64)
+    assert config.serving.cache_ttl_seconds == 900
+    assert config.serving.experiment_id == "ranking-model-v1"
 
 
 @pytest.mark.parametrize(
@@ -106,4 +114,21 @@ def test_ranking_metric_k_cannot_exceed_candidate_count() -> None:
     )
 
     with pytest.raises(ValueError, match="cannot exceed"):
+        config.validate()
+
+
+def test_serving_candidate_count_must_cover_response_limit() -> None:
+    config = ServingConfig(
+        redis_url="redis://localhost:6379/0",
+        cache_ttl_seconds=60,
+        event_stream_maxlen=100,
+        recommendation_limit=20,
+        retrieval_candidate_k=10,
+        experiment_id="experiment",
+        model_namespace="recs",
+        api_host="127.0.0.1",
+        api_port=8000,
+    )
+
+    with pytest.raises(ValueError, match="cannot be smaller"):
         config.validate()

@@ -7,7 +7,7 @@ export PYSPARK_PYTHON := $(PYTHON)
 export PYSPARK_DRIVER_PYTHON := $(PYTHON)
 export TF_USE_LEGACY_KERAS := 1
 
-.PHONY: setup setup-java install install-retrieval install-indexing install-serving download prepare features baseline prepare-retrieval train-retrieval build-index prepare-ranking train-ranking export-triton verify-triton test-triton infra-up infra-down test-redis serve benchmark-serving test lint check clean-generated
+.PHONY: setup setup-java install install-retrieval install-indexing install-serving download prepare features baseline prepare-retrieval train-retrieval build-index prepare-ranking train-ranking export-triton verify-triton test-triton infra-up infra-down test-redis validate-pipeline airflow-test serve benchmark-serving test lint check clean-generated
 
 setup:
 	python3.11 -m venv .venv
@@ -74,6 +74,16 @@ infra-down:
 
 test-redis:
 	RUN_REDIS_INTEGRATION=1 $(PYTHON) -m pytest tests/integration/test_redis.py -v
+
+validate-pipeline:
+	@for stage in validate_raw prepare_data build_features prepare_retrieval train_retrieval build_index prepare_ranking train_ranking export_triton validate_serving; do \
+		$(PYTHON) scripts/pipeline_stage.py --stage $$stage --mode validate || exit 1; \
+	done
+
+airflow-test:
+	mkdir -p .airflow
+	docker compose --profile orchestration run --rm airflow airflow db migrate
+	docker compose --profile orchestration run --rm airflow airflow dags test recommender_retraining 2026-11-05
 
 serve:
 	$(PYTHON) -m recommender.serving.api

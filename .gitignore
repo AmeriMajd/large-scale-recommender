@@ -42,6 +42,7 @@ logs/
 airflow.db
 airflow.cfg
 webserver_config.py
+.airflow/
 
 # Triton model binaries are generated; keep repository documentation/config
 triton-models/**/1/

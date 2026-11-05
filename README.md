@@ -12,10 +12,13 @@ nearest-neighbor retrieval, serving, caching, orchestration, and experimentation
 
 ## Current status
 
-Day 7 is complete: the repository now includes the reproducible temporal and
-feature pipelines, two-tower retrieval, persistent exact/HNSW FAISS indexes,
-two exported deep rankers, cold-start fallbacks, versioned Redis caching, and a
-tested recommendation/feedback API with deterministic A/B assignment.
+Days 1–10 are implemented: the repository includes the reproducible temporal
+and feature pipelines, two-tower retrieval, persistent exact/HNSW FAISS
+indexes, two exported deep rankers, cold-start fallbacks, versioned Redis
+caching, a tested recommendation/feedback API, Triton model-repository and
+client integration, and a ten-stage Airflow retraining DAG. Redis has been
+tested live, while the large Triton and Airflow container runs remain pending
+and are not presented as completed evidence.
 
 ### Current baseline
 
@@ -134,6 +137,8 @@ make train-retrieval
 make build-index
 make prepare-ranking
 make train-ranking
+make export-triton
+make validate-pipeline
 make test
 ```
 
@@ -158,6 +163,11 @@ make serve
 
 Open `http://127.0.0.1:8000/docs` for the interactive API contract, or run
 `make benchmark-serving` to reproduce the local miss/hit latency report.
+
+For containerized infrastructure, copy `.env.example` to `.env`, then use
+`make infra-up`, `make test-redis`, and `make verify-triton`. The pinned Triton
+image is approximately 10.8 GB compressed, so plan the first pull accordingly.
+Run `make airflow-test` to execute the DAG in its isolated Airflow container.
 
 To understand the inputs and leakage controls before running the pipeline, read
 [docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md).

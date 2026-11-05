@@ -7,7 +7,7 @@ export PYSPARK_PYTHON := $(PYTHON)
 export PYSPARK_DRIVER_PYTHON := $(PYTHON)
 export TF_USE_LEGACY_KERAS := 1
 
-.PHONY: setup setup-java install install-retrieval install-indexing install-serving download prepare features baseline prepare-retrieval train-retrieval build-index prepare-ranking train-ranking export-triton verify-triton test-triton serve benchmark-serving test lint check clean-generated
+.PHONY: setup setup-java install install-retrieval install-indexing install-serving download prepare features baseline prepare-retrieval train-retrieval build-index prepare-ranking train-ranking export-triton verify-triton test-triton infra-up infra-down test-redis serve benchmark-serving test lint check clean-generated
 
 setup:
 	python3.11 -m venv .venv
@@ -65,6 +65,15 @@ verify-triton:
 
 test-triton:
 	RUN_TRITON_INTEGRATION=1 $(PYTHON) -m pytest tests/integration/test_triton.py -v
+
+infra-up: export-triton
+	docker compose up -d redis triton
+
+infra-down:
+	docker compose down
+
+test-redis:
+	RUN_REDIS_INTEGRATION=1 $(PYTHON) -m pytest tests/integration/test_redis.py -v
 
 serve:
 	$(PYTHON) -m recommender.serving.api

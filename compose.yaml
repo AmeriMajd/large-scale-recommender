@@ -1,0 +1,59 @@
+name: large-scale-recommender
+
+services:
+  redis:
+    image: redis:8.2.10-alpine
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+    restart: unless-stopped
+
+  triton:
+    image: nvcr.io/nvidia/tritonserver:25.02-py3
+    command:
+      - tritonserver
+      - --model-repository=/models
+      - --strict-model-config=true
+      - --log-info=true
+    ports:
+      - "8001:8000"
+      - "8002:8001"
+      - "8003:8002"
+    volumes:
+      - ./triton-models:/models:ro
+    shm_size: 1gb
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v2/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  airflow:
+    image: apache/airflow:3.3.2-python3.11
+    profiles: ["orchestration"]
+    user: "${AIRFLOW_UID:-1000}:0"
+    working_dir: /opt/project
+    environment:
+      AIRFLOW_HOME: /opt/airflow
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/project/dags
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
+      RECSYS_PROJECT_ROOT: /opt/project
+      RECSYS_DAG_MODE: validate
+      PYTHONPATH: /opt/project/src
+    volumes:
+      - ./:/opt/project
+      - ./.airflow:/opt/airflow
+    command: ["airflow", "version"]
+
+volumes:
+  redis-data:

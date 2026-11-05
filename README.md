@@ -12,9 +12,10 @@ nearest-neighbor retrieval, serving, caching, orchestration, and experimentation
 
 ## Current status
 
-Day 5 is complete: the repository now includes the reproducible temporal and
+Day 7 is complete: the repository now includes the reproducible temporal and
 feature pipelines, two-tower retrieval, persistent exact/HNSW FAISS indexes,
-and two exported deep ranking models evaluated on future candidate lists.
+two exported deep rankers, cold-start fallbacks, versioned Redis caching, and a
+tested recommendation/feedback API with deterministic A/B assignment.
 
 ### Current baseline
 
@@ -99,6 +100,21 @@ for labels, features, export, and evaluation semantics and
 [docs/DAY_05_REPORT.md](docs/DAY_05_REPORT.md) for the full results, debugging
 log, code walkthrough, exercises, and study resources.
 
+### Current serving experiment
+
+| Local API path | First miss | Warm P50 | Warm P95 |
+|---|---:|---:|---:|
+| Known user: tower + FAISS + DCN | 374.10 ms | 13.79 ms | 15.62 ms |
+| Genre cold start | 119.94 ms | 14.41 ms | 16.41 ms |
+
+The benchmark uses the real artifacts through FastAPI's in-process client and
+30 warm calls on one development CPU. Redis was unavailable, so warm latency
+uses the deterministic in-memory TTL backend and is not presented as production
+load. See [docs/COLD_START_CACHE_CONTRACT.md](docs/COLD_START_CACHE_CONTRACT.md),
+[docs/API_CONTRACT.md](docs/API_CONTRACT.md),
+[docs/DAY_06_REPORT.md](docs/DAY_06_REPORT.md), and
+[docs/DAY_07_REPORT.md](docs/DAY_07_REPORT.md).
+
 ## Data and feature quick start
 
 Run these commands from the repository root:
@@ -108,6 +124,7 @@ make setup
 source .venv/bin/activate
 make install-retrieval
 make install-indexing
+make install-serving
 make download
 make prepare
 make features
@@ -132,6 +149,15 @@ under `artifacts/indexes/` and a machine-readable benchmark report under
 `artifacts/reports/`. Ranking preparation writes ignored Parquet examples under
 `data/processed/ml-25m/ranking/`; training exports both rankers under
 `artifacts/models/ranking/`.
+
+After the model and index artifacts exist, start the local HTTP service with:
+
+```bash
+make serve
+```
+
+Open `http://127.0.0.1:8000/docs` for the interactive API contract, or run
+`make benchmark-serving` to reproduce the local miss/hit latency report.
 
 To understand the inputs and leakage controls before running the pipeline, read
 [docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md).

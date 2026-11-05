@@ -23,7 +23,10 @@ indexing = [
   "faiss-cpu==1.15.1",
 ]
 serving = [
+  "fastapi==0.121.0",
+  "httpx==0.28.1",
   "redis==8.1.0",
+  "uvicorn==0.54.0",
 ]
 dev = [
   "pytest>=8,<9",
@@ -40,6 +43,8 @@ recsys-train-retrieval = "recommender.retrieval.train:main"
 recsys-build-index = "recommender.indexing.build:main"
 recsys-prepare-ranking = "recommender.ranking.prepare:main"
 recsys-train-ranking = "recommender.ranking.train:main"
+recsys-serve = "recommender.serving.api:main"
+recsys-benchmark-serving = "recommender.serving.benchmark:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

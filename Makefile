@@ -7,7 +7,7 @@ export PYSPARK_PYTHON := $(PYTHON)
 export PYSPARK_DRIVER_PYTHON := $(PYTHON)
 export TF_USE_LEGACY_KERAS := 1
 
-.PHONY: setup setup-java install install-retrieval install-indexing install-serving download prepare features baseline prepare-retrieval train-retrieval build-index prepare-ranking train-ranking test lint check clean-generated
+.PHONY: setup setup-java install install-retrieval install-indexing install-serving download prepare features baseline prepare-retrieval train-retrieval build-index prepare-ranking train-ranking serve benchmark-serving test lint check clean-generated
 
 setup:
 	python3.11 -m venv .venv
@@ -56,6 +56,12 @@ prepare-ranking:
 
 train-ranking:
 	$(PYTHON) -m recommender.ranking.train
+
+serve:
+	$(PYTHON) -m recommender.serving.api
+
+benchmark-serving:
+	$(PYTHON) -m recommender.serving.benchmark
 
 test:
 	$(PYTHON) -m pytest

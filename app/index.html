@@ -5,43 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Interactive demo for the large-scale personalized recommendation engine."
+      content="Model observatory for the large-scale recommendation engine."
     />
-    <title>Recommender Lab</title>
+    <title>Recommender Lab · Model Observatory</title>
     <link rel="stylesheet" href="/styles.css" />
     <script src="/app.js" defer></script>
   </head>
   <body>
-    <div class="ambient ambient-one" aria-hidden="true"></div>
-    <div class="ambient ambient-two" aria-hidden="true"></div>
     <div class="app-shell">
       <header class="topbar">
         <button class="brand" type="button" data-view="for-you">
-          <span class="brand-mark" aria-hidden="true">
-            <span></span><span></span><span></span>
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>
+            <strong>Recommender Lab</strong>
+            <small>MODEL OBSERVATORY</small>
           </span>
-          <span>Recommender Lab</span>
         </button>
 
         <nav class="main-nav" aria-label="Primary navigation">
-          <button type="button" data-view="discover">Discover</button>
-          <button type="button" class="active" data-view="for-you">For You</button>
-          <button type="button" data-view="experiments">Experiments</button>
+          <button class="active" type="button" data-view="for-you">Recommendations</button>
+          <button type="button" data-view="discover">Cold start</button>
+          <button type="button" data-view="experiments">A/B metrics</button>
         </nav>
 
-        <form class="user-control" id="user-form">
-          <label for="user-id">User</label>
-          <input id="user-id" name="user-id" type="number" min="1" value="42" />
-          <button type="submit" aria-label="Load recommendations for user">
-            <span aria-hidden="true">→</span>
-          </button>
-        </form>
+        <a class="api-link" href="/docs" target="_blank" rel="noreferrer">
+          API docs <span aria-hidden="true">↗</span>
+        </a>
       </header>
 
       <main id="view" tabindex="-1" aria-live="polite">
         <section class="loading-state">
-          <div class="loading-orb" aria-hidden="true"></div>
-          <p>Preparing your recommendations…</p>
+          <span class="loader" aria-hidden="true"></span>
+          <p>Connecting to the serving stack…</p>
         </section>
       </main>
     </div>

@@ -11,9 +11,9 @@ and one retry per task.
 Two execution modes solve different problems. `validate` checks the existing
 25M-data artifact chain quickly and is intended for the local DAG
 demonstration. `full` executes every stage's established Make target before
-checking outputs. The local Python validator successfully checked all ten
-stages and fourteen declared output artifacts. The containerized Airflow DAG
-run remains pending and is not counted as completed evidence below.
+checking outputs. The local Python validator and the pinned Airflow 3.3.2
+container both successfully checked all ten stages and fourteen declared
+output artifacts.
 
 ## Concepts learned
 
@@ -52,7 +52,7 @@ specification. It contains scheduling and retry policy, not model logic.
 | A full 25M retrain is too slow for a short DAG demonstration | Training success and orchestration correctness are different test scopes | Added `validate` mode that exercises the real DAG and artifact checks without retraining | Make demos fast without pretending validation is fresh training |
 | A DAG-only task list would duplicate command and dependency knowledge | Pipeline commands already exist in the Makefile | Added a shared typed stage specification consumed by the CLI and DAG | One graph definition reduces drift |
 | Downstream tasks could run after a command that exited zero but produced no artifact | Exit status alone does not prove the ML stage contract | Every stage declares and validates concrete files after execution | Add data/artifact self-checks to workflows |
-| Dynamic DAG code is harder to inspect with string-only tests | Airflow is intentionally absent from the main virtual environment | Added graph unit tests and a reproducible `make airflow-test` command; the live container run remains pending | Unit graph tests and scheduler integration tests cover different failures, so do not claim the latter before it runs |
+| Dynamic DAG code is harder to inspect with string-only tests | Airflow is intentionally absent from the main virtual environment | Added graph unit tests and a reproducible `make airflow-test` command, then ran the DAG in the pinned Airflow container | Unit graph tests and scheduler integration tests cover different failures, so both need explicit evidence |
 
 ## Tests and evidence
 
@@ -62,9 +62,10 @@ specification. It contains scheduling and retry policy, not model logic.
 - Missing-output tests prove validation fails with a useful path.
 - Local validation checked every declared artifact successfully.
 - The full repository suite reports 57 passed, two service-gated skips, and one
-  recorded transitive deprecation warning in 22.11 seconds.
-- The Airflow image was not downloaded or executed during this milestone; the
-  `make airflow-test` command is ready for the remaining live integration test.
+  recorded transitive deprecation warning.
+- `make airflow-test` pulled `apache/airflow:3.3.2-python3.11`, migrated the
+  SQLite metadata database, executed all ten tasks in dependency order, and
+  finished the DAG run successfully on 5 November 2026.
 
 Validation mode proves orchestration and the current artifact chain. It does
 not claim that a new multi-hour 25M retrain was performed during this milestone.

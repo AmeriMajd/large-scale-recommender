@@ -1,0 +1,11 @@
+{
+  "name": "large-scale-recommender-presentation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes hyperframes@0.8.170 present ./deck",
+    "check": "npx --yes hyperframes@0.8.170 check ./deck --json",
+    "studio": "npx --yes hyperframes@0.8.170 preview ./deck --background",
+    "publish": "npx --yes hyperframes@0.8.170 publish ./deck"
+  }
+}

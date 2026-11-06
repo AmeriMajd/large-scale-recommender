@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Large-Scale Recommender — Final Presentation</title>
+    <script src="vendor/hyperframes-player.global.js"></script>
+    <script src="vendor/hyperframes-slideshow.global.js"></script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #070b12;
+      }
+
+      hyperframes-slideshow {
+        display: block;
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      hyperframes-player {
+        position: absolute;
+        inset: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <hyperframes-slideshow tabindex="0" notes-storage-key="large-scale-recommender-final">
+      <hyperframes-player interactive src="deck/index.html"></hyperframes-player>
+      <script type="application/hyperframes-slideshow+json">
+        {
+          "slides": [
+            {
+              "sceneId": "cover",
+              "notes": "Open with the thesis: this is not a notebook with one model score. It is a complete recommendation system covering data, retrieval, ranking, serving, experimentation, and orchestration. Preview the structure in one sentence, then move quickly."
+            },
+            {
+              "sceneId": "data",
+              "notes": "Explain that the temporal split is the first production decision. Training uses only the past, validation selects models on the future, and test remains untouched. Emphasize the exact counts and the June 2016 feature cutoff."
+            },
+            {
+              "sceneId": "architecture",
+              "notes": "Walk left to right. Spark creates reproducible features, the two-tower model retrieves candidates, FAISS performs vector search, DCN or Wide & Deep re-ranks, and FastAPI serves with Redis. Airflow orchestrates commands but does not contain ML logic."
+            },
+            {
+              "sceneId": "retrieval",
+              "notes": "Explain the scale boundary: 137,622 modeled users and a 24,728 by 64 item embedding matrix. A user vector is compared against the item index, and only the top 200 continue to ranking. This is the main latency-control mechanism."
+            },
+            {
+              "sceneId": "faiss",
+              "notes": "Be honest about the benchmark. At only 24.7K candidates, high-recall HNSW is roughly tied with exact search. The useful outcome is not a dramatic speedup; it is a measured recall-latency trade-off and a persistent index contract."
+            },
+            {
+              "sceneId": "ranking",
+              "notes": "The ranking stage adds context and improves the order of the same candidates. DCN achieved the best validation NDCG at 0.0753, narrowly ahead of Wide & Deep at 0.0740. State that this is a small, reproducible win—not a breakthrough claim."
+            },
+            {
+              "sceneId": "serving",
+              "notes": "Describe the online path and failure behavior. The first request computes the user vector, searches FAISS, and ranks candidates. Cached calls are much faster. The benchmark used an in-memory TTL fallback, so do not call it a Redis production benchmark."
+            },
+            {
+              "sceneId": "airflow",
+              "notes": "This is the production-lifecycle proof. The DAG has ten dependency-aware tasks and validates fourteen artifacts. The pinned Airflow 3.3.2 container executed the complete DAG in validate mode successfully on 5 November 2026. Clarify that validate mode checks orchestration and existing artifacts, not a fresh multi-hour retrain."
+            },
+            {
+              "sceneId": "validation",
+              "notes": "Separate implemented, tested, and optional work. Spark, FAISS, both rankers, Redis, Airflow, the API, and the UI have concrete evidence. Triton repository generation and client code are tested, but the 10.8 GB live server run remains optional and is not claimed as completed."
+            },
+            {
+              "sceneId": "ui",
+              "notes": "Introduce the live demo. The interface is intentionally a model observatory: it displays health, the selected model, ranking and retrieval scores, request trace, cache state, experiment assignment, and feedback. Switch to the browser after this slide."
+            },
+            {
+              "sceneId": "demo",
+              "notes": "Use this as the demo checklist. Load user 42, inspect the trace, click a result, create a cold-start profile, and show A/B metrics. If a live service fails, return to the screenshot and narrate the same evidence without improvising claims."
+            },
+            {
+              "sceneId": "close",
+              "notes": "Close on the system-level result: reproducible data boundaries, measured model trade-offs, and an operable serving pipeline. Name the next engineering step as optional live Triton validation and production-scale load testing. Invite questions."
+            }
+          ],
+          "slideSequences": []
+        }
+      </script>
+    </hyperframes-slideshow>
+    <script>
+      window.addEventListener("load", function () {
+        document.querySelector("hyperframes-slideshow").focus();
+      });
+    </script>
+  </body>
+</html>

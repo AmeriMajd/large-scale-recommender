@@ -1,0 +1,1364 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Large-Scale Recommender — Final Presentation</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      :root {
+        --bg: #070b12;
+        --panel: #0d141f;
+        --panel-2: #121c29;
+        --line: #2a384b;
+        --line-soft: rgba(74, 93, 119, 0.45);
+        --text: #f4f7fb;
+        --soft: #a9b5c6;
+        --faint: #718096;
+        --cyan: #55e4e8;
+        --cyan-soft: rgba(85, 228, 232, 0.12);
+        --violet: #9888ff;
+        --green: #65dd91;
+        --amber: #f6c76e;
+        --red: #ff7d89;
+        --mono: "IBM Plex Mono", "Space Mono", monospace;
+        --sans: Inter, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        margin: 0;
+        overflow: hidden;
+        color: var(--text);
+        background: var(--bg);
+        font-family: var(--sans);
+      }
+
+      body::before {
+        position: fixed;
+        inset: 0;
+        opacity: 0.34;
+        background:
+          linear-gradient(rgba(52, 68, 91, 0.16) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(52, 68, 91, 0.16) 1px, transparent 1px);
+        background-size: 48px 48px;
+        content: "";
+        pointer-events: none;
+      }
+
+      .scene-frame {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        background:
+          radial-gradient(circle at 86% 12%, rgba(85, 228, 232, 0.055), transparent 28%),
+          var(--bg);
+      }
+
+      .slide-shell {
+        position: absolute;
+        inset: 0;
+        padding: 82px 106px 150px;
+      }
+
+      .kicker {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 40px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .kicker::before {
+        width: 54px;
+        height: 4px;
+        background: var(--cyan);
+        content: "";
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        max-width: 1560px;
+        font-size: 92px;
+        line-height: 1.02;
+        letter-spacing: -0.055em;
+      }
+
+      h2 {
+        max-width: 1580px;
+        font-size: 74px;
+        line-height: 1.08;
+        letter-spacing: -0.046em;
+      }
+
+      h3 {
+        font-size: 42px;
+        line-height: 1.15;
+        letter-spacing: -0.025em;
+      }
+
+      .subhead {
+        max-width: 1300px;
+        margin-top: 24px;
+        color: var(--soft);
+        font-size: 42px;
+        line-height: 1.45;
+      }
+
+      .accent {
+        color: var(--cyan);
+      }
+
+      .violet {
+        color: var(--violet);
+      }
+
+      .muted {
+        color: var(--soft);
+      }
+
+      .mono {
+        font-family: var(--mono);
+      }
+
+      .slide-number {
+        position: absolute;
+        bottom: 56px;
+        left: 106px;
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: 28px;
+      }
+
+      .source {
+        position: absolute;
+        bottom: 56px;
+        right: 475px;
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: 26px;
+        text-align: right;
+      }
+
+      .hero-lockup {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(400px, 0.55fr);
+        align-items: end;
+        gap: 70px;
+        height: 610px;
+        margin-top: 35px;
+      }
+
+      .hero-title {
+        align-self: center;
+      }
+
+      .hero-title h1 {
+        font-size: 108px;
+      }
+
+      .hero-title p {
+        margin-top: 30px;
+        color: var(--soft);
+        font-size: 42px;
+        line-height: 1.45;
+      }
+
+      .hero-stack {
+        display: grid;
+        gap: 14px;
+      }
+
+      .hero-stat {
+        padding: 26px 30px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .hero-stat span {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: 28px;
+        text-transform: uppercase;
+      }
+
+      .hero-stat strong {
+        font-family: var(--mono);
+        font-size: 48px;
+      }
+
+      .split-grid {
+        display: grid;
+        grid-template-columns: 4fr 1fr 1fr;
+        gap: 12px;
+        height: 265px;
+        margin-top: 80px;
+      }
+
+      .split-part {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 26px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .split-part.train {
+        border-color: rgba(85, 228, 232, 0.55);
+        background: linear-gradient(135deg, rgba(85, 228, 232, 0.14), var(--panel));
+      }
+
+      .split-part span {
+        color: var(--soft);
+        font-family: var(--mono);
+        font-size: 34px;
+      }
+
+      .split-part strong {
+        font-family: var(--mono);
+        font-size: 52px;
+      }
+
+      .split-part small {
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: 27px;
+      }
+
+      .timeline-rule {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin-top: 38px;
+        color: var(--soft);
+        font-family: var(--mono);
+        font-size: 34px;
+      }
+
+      .timeline-rule::before {
+        flex: 1;
+        height: 2px;
+        background: linear-gradient(90deg, var(--cyan), var(--violet));
+        content: "";
+      }
+
+      .architecture {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 24px;
+        align-items: center;
+        margin-top: 72px;
+      }
+
+      .arch-node {
+        position: relative;
+        min-height: 230px;
+        padding: 26px 22px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .arch-node::after {
+        position: absolute;
+        top: 50%;
+        right: -25px;
+        width: 25px;
+        border-top: 2px solid var(--line);
+        content: "";
+      }
+
+      .arch-node:last-child::after {
+        display: none;
+      }
+
+      .arch-node .index {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 28px;
+      }
+
+      .arch-node h3 {
+        margin-top: 30px;
+        font-size: 38px;
+      }
+
+      .arch-node p {
+        margin-top: 15px;
+        color: var(--soft);
+        font-size: 30px;
+        line-height: 1.35;
+      }
+
+      .architecture-band {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 28px;
+        margin-top: 36px;
+        padding: 24px 28px;
+        border: 1px solid rgba(152, 136, 255, 0.45);
+        background: rgba(152, 136, 255, 0.09);
+      }
+
+      .architecture-band strong,
+      .architecture-band span {
+        font-family: var(--mono);
+        font-size: 32px;
+      }
+
+      .architecture-band strong {
+        color: var(--violet);
+      }
+
+      .retrieval-stage {
+        display: grid;
+        grid-template-columns: 1fr auto 1.35fr auto 0.85fr;
+        align-items: center;
+        gap: 28px;
+        margin-top: 78px;
+      }
+
+      .retrieval-box {
+        min-height: 310px;
+        padding: 32px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .retrieval-box.primary {
+        border-color: rgba(85, 228, 232, 0.5);
+        background: var(--cyan-soft);
+      }
+
+      .retrieval-box span {
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: 29px;
+        text-transform: uppercase;
+      }
+
+      .retrieval-box strong {
+        display: block;
+        margin-top: 38px;
+        font-family: var(--mono);
+        font-size: 58px;
+      }
+
+      .retrieval-box p {
+        margin-top: 28px;
+        color: var(--soft);
+        font-size: 32px;
+        line-height: 1.4;
+      }
+
+      .arrow {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 58px;
+      }
+
+      .matrix {
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        gap: 7px;
+        margin-top: 30px;
+      }
+
+      .matrix i {
+        aspect-ratio: 1;
+        background: rgba(152, 136, 255, calc(0.22 + var(--i) * 0.065));
+      }
+
+      .table-card {
+        margin-top: 58px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .metric-row {
+        display: grid;
+        grid-template-columns: 1.4fr repeat(4, 0.8fr);
+        align-items: center;
+        min-height: 98px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .metric-row:last-child {
+        border-bottom: 0;
+      }
+
+      .metric-row.header {
+        min-height: 72px;
+        color: var(--faint);
+        background: #0a1019;
+        font-family: var(--mono);
+        font-size: 27px;
+        text-transform: uppercase;
+      }
+
+      .metric-row > * {
+        padding: 0 28px;
+      }
+
+      .metric-row strong {
+        font-size: 36px;
+      }
+
+      .metric-row span,
+      .metric-row code {
+        color: var(--soft);
+        font-family: var(--mono);
+        font-size: 32px;
+      }
+
+      .metric-row.best {
+        box-shadow: inset 5px 0 var(--cyan);
+        background: var(--cyan-soft);
+      }
+
+      .callout {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 30px;
+        margin-top: 28px;
+        padding: 20px 28px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .callout p {
+        color: var(--soft);
+        font-size: 32px;
+      }
+
+      .callout strong {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 32px;
+      }
+
+      .ranking-layout {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 42px;
+        margin-top: 52px;
+      }
+
+      .hf-catalog-animated-bar-chart {
+        padding: 30px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .hf-catalog-animated-bar-chart header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        margin-bottom: 24px;
+      }
+
+      .hf-catalog-animated-bar-chart header p {
+        margin-top: 9px;
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: 28px;
+      }
+
+      .hf-catalog-animated-bar-chart header strong {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 48px;
+      }
+
+      .rank-bars {
+        display: grid;
+        gap: 18px;
+      }
+
+      .rank-bar {
+        display: grid;
+        grid-template-columns: 220px 1fr 125px;
+        align-items: center;
+        gap: 22px;
+      }
+
+      .rank-bar span,
+      .rank-bar code {
+        font-size: 31px;
+      }
+
+      .rank-bar code {
+        color: var(--soft);
+        font-family: var(--mono);
+        text-align: right;
+      }
+
+      .bar-track {
+        height: 26px;
+        background: #1b2635;
+      }
+
+      .bar-track i {
+        display: block;
+        height: 100%;
+        width: var(--value);
+        background: var(--violet);
+      }
+
+      .rank-bar.leading .bar-track i {
+        background: linear-gradient(90deg, var(--violet), var(--cyan));
+      }
+
+      .rank-bar.leading span,
+      .rank-bar.leading code {
+        color: var(--cyan);
+      }
+
+      .selection-card {
+        display: grid;
+        align-content: center;
+        min-height: 430px;
+        padding: 40px;
+        border: 1px solid rgba(85, 228, 232, 0.5);
+        background: var(--cyan-soft);
+      }
+
+      .selection-card span {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 30px;
+      }
+
+      .selection-card strong {
+        margin-top: 24px;
+        font-size: 64px;
+      }
+
+      .selection-card p {
+        margin-top: 26px;
+        color: var(--soft);
+        font-size: 34px;
+        line-height: 1.42;
+      }
+
+      .serving-flow {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        align-items: center;
+        gap: 24px;
+        margin-top: 52px;
+      }
+
+      .serve-node {
+        min-height: 230px;
+        padding: 28px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .serve-node strong {
+        display: block;
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 42px;
+      }
+
+      .serve-node p {
+        margin-top: 25px;
+        color: var(--soft);
+        font-size: 32px;
+        line-height: 1.4;
+      }
+
+      .latency-strip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 26px;
+      }
+
+      .latency-stat {
+        padding: 18px 24px;
+        border: 1px solid var(--line);
+        background: #0a1019;
+      }
+
+      .latency-stat span {
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: 26px;
+      }
+
+      .latency-stat strong {
+        float: right;
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 31px;
+      }
+
+      .dag {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 24px 34px;
+        align-items: center;
+        margin-top: 62px;
+      }
+
+      .dag-node {
+        position: relative;
+        display: grid;
+        min-height: 120px;
+        place-items: center;
+        padding: 18px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        font-family: var(--mono);
+        font-size: 29px;
+        text-align: center;
+      }
+
+      .dag-node::after {
+        position: absolute;
+        top: 50%;
+        right: -35px;
+        width: 35px;
+        border-top: 2px solid var(--line);
+        content: "";
+      }
+
+      .dag-node:nth-child(5)::after,
+      .dag-node:nth-child(10)::after {
+        display: none;
+      }
+
+      .dag-node.done {
+        border-color: rgba(101, 221, 145, 0.5);
+      }
+
+      .dag-node.done::before {
+        position: absolute;
+        top: 9px;
+        right: 12px;
+        color: var(--green);
+        content: "✓";
+      }
+
+      .dag-footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 25px;
+        margin-top: 34px;
+        padding: 22px 28px;
+        border: 1px solid rgba(101, 221, 145, 0.4);
+        background: rgba(101, 221, 145, 0.08);
+        font-family: var(--mono);
+        font-size: 31px;
+      }
+
+      .validation-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 55px;
+      }
+
+      .validation-card {
+        min-height: 172px;
+        padding: 26px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .validation-card span {
+        font-family: var(--mono);
+        font-size: 29px;
+      }
+
+      .validation-card strong {
+        display: block;
+        margin-top: 27px;
+        color: var(--green);
+        font-size: 38px;
+      }
+
+      .validation-card.optional strong {
+        color: var(--amber);
+      }
+
+      .evidence-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 30px;
+        padding: 24px 30px;
+        border: 1px solid var(--line);
+        background: #0a1019;
+      }
+
+      .evidence-line span,
+      .evidence-line strong {
+        font-family: var(--mono);
+        font-size: 34px;
+      }
+
+      .evidence-line strong {
+        color: var(--cyan);
+      }
+
+      .browser-stage {
+        position: relative;
+        width: 1660px;
+        height: 650px;
+        margin: 44px auto 0;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: var(--panel);
+        box-shadow: 0 35px 100px rgba(0, 0, 0, 0.42);
+      }
+
+      .browser-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 52px;
+        padding: 0 20px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .browser-bar i {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--line);
+      }
+
+      .browser-address {
+        margin-left: 20px;
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: 26px;
+      }
+
+      .browser-stage img {
+        display: block;
+        width: 100%;
+        height: calc(100% - 52px);
+        object-fit: cover;
+        object-position: top center;
+      }
+
+      .demo-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+        margin-top: 64px;
+      }
+
+      .demo-step {
+        min-height: 330px;
+        padding: 26px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .demo-step .step {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 28px;
+      }
+
+      .demo-step h3 {
+        margin-top: 34px;
+        font-size: 40px;
+      }
+
+      .demo-step p {
+        margin-top: 22px;
+        color: var(--soft);
+        font-size: 31px;
+        line-height: 1.45;
+      }
+
+      .demo-cue {
+        margin-top: 28px;
+        padding: 20px 26px;
+        border-left: 4px solid var(--violet);
+        color: var(--soft);
+        background: rgba(152, 136, 255, 0.08);
+        font-family: var(--mono);
+        font-size: 30px;
+      }
+
+      .closing-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-top: 72px;
+      }
+
+      .closing-card {
+        min-height: 290px;
+        padding: 32px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .closing-card span {
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 30px;
+      }
+
+      .closing-card h3 {
+        margin-top: 36px;
+        font-size: 43px;
+      }
+
+      .closing-card p {
+        margin-top: 20px;
+        color: var(--soft);
+        font-size: 32px;
+        line-height: 1.4;
+      }
+
+      [data-anim] {
+        will-change: transform, opacity;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="application/hyperframes-slideshow+json">
+      {
+        "slides": [
+          {
+            "sceneId": "cover",
+            "notes": "Open with the thesis: this is not a notebook with one model score. It is a complete recommendation system covering data, retrieval, ranking, serving, experimentation, and orchestration. Preview the structure in one sentence, then move quickly."
+          },
+          {
+            "sceneId": "data",
+            "notes": "Explain that the temporal split is the first production decision. Training uses only the past, validation selects models on the future, and test remains untouched. Emphasize the exact counts and the June 2016 feature cutoff."
+          },
+          {
+            "sceneId": "architecture",
+            "notes": "Walk left to right. Spark creates reproducible features, the two-tower model retrieves candidates, FAISS performs vector search, DCN or Wide & Deep re-ranks, and FastAPI serves with Redis. Airflow orchestrates commands but does not contain ML logic."
+          },
+          {
+            "sceneId": "retrieval",
+            "notes": "Explain the scale boundary: 137,622 modeled users and a 24,728 by 64 item embedding matrix. A user vector is compared against the item index, and only the top 200 continue to ranking. This is the main latency-control mechanism."
+          },
+          {
+            "sceneId": "faiss",
+            "notes": "Be honest about the benchmark. At only 24.7K candidates, high-recall HNSW is roughly tied with exact search. The useful outcome is not a dramatic speedup; it is a measured recall-latency trade-off and a persistent index contract."
+          },
+          {
+            "sceneId": "ranking",
+            "notes": "The ranking stage adds context and improves the order of the same candidates. DCN achieved the best validation NDCG at 0.0753, narrowly ahead of Wide & Deep at 0.0740. State that this is a small, reproducible win—not a breakthrough claim."
+          },
+          {
+            "sceneId": "serving",
+            "notes": "Describe the online path and failure behavior. The first request computes the user vector, searches FAISS, and ranks candidates. Cached calls are much faster. The benchmark used an in-memory TTL fallback, so do not call it a Redis production benchmark."
+          },
+          {
+            "sceneId": "airflow",
+            "notes": "This is the production-lifecycle proof. The DAG has ten dependency-aware tasks and validates fourteen artifacts. The pinned Airflow 3.3.2 container executed the complete DAG in validate mode successfully on 5 November 2026. Clarify that validate mode checks orchestration and existing artifacts, not a fresh multi-hour retrain."
+          },
+          {
+            "sceneId": "validation",
+            "notes": "Separate implemented, tested, and optional work. Spark, FAISS, both rankers, Redis, Airflow, the API, and the UI have concrete evidence. Triton repository generation and client code are tested, but the 10.8 GB live server run remains optional and is not claimed as completed."
+          },
+          {
+            "sceneId": "ui",
+            "notes": "Introduce the live demo. The interface is intentionally a model observatory: it displays health, the selected model, ranking and retrieval scores, request trace, cache state, experiment assignment, and feedback. Switch to the browser after this slide."
+          },
+          {
+            "sceneId": "demo",
+            "notes": "Use this as the demo checklist. Load user 42, inspect the trace, click a result, create a cold-start profile, and show A/B metrics. If a live service fails, return to the screenshot and narrate the same evidence without improvising claims."
+          },
+          {
+            "sceneId": "close",
+            "notes": "Close on the system-level result: reproducible data boundaries, measured model trade-offs, and an operable serving pipeline. Name the next engineering step as optional live Triton validation and production-scale load testing. Invite questions."
+          }
+        ],
+        "slideSequences": []
+      }
+    </script>
+
+    <div
+      id="timeline-root"
+      class="clip"
+      data-composition-id="root"
+      data-start="0"
+      data-duration="72"
+      data-width="1920"
+      data-height="1080"
+      data-layout-ignore
+      aria-hidden="true"
+      style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none"
+    ></div>
+
+    <section
+      id="scene-cover"
+      class="scene-frame clip"
+      data-composition-id="cover"
+      data-start="0"
+      data-duration="6"
+      data-label="Opening thesis"
+      data-width="1920"
+      data-height="1080"
+      data-no-timeline
+      style="opacity: 1; visibility: visible; pointer-events: auto"
+    >
+      <div class="slide-shell">
+        <div class="kicker" data-anim>FINAL PROJECT · AI / ML</div>
+        <div class="hero-lockup">
+          <div class="hero-title" data-anim>
+            <h1>A scalable recommender is a <span class="accent">system</span>, not a single model.</h1>
+            <p>Large-scale personalized recommendation with retrieval, ranking, serving, experimentation, and orchestration.</p>
+          </div>
+          <div class="hero-stack" data-anim>
+            <div class="hero-stat"><span>Dataset</span><strong>25.0M ratings</strong></div>
+            <div class="hero-stat"><span>Online design</span><strong>2 stages</strong></div>
+            <div class="hero-stat"><span>Orchestration</span><strong>10 tasks</strong></div>
+          </div>
+        </div>
+        <div class="slide-number">01 / 12</div>
+      </div>
+    </section>
+
+    <section
+      id="scene-data"
+      class="scene-frame clip"
+      data-composition-id="data"
+      data-start="6"
+      data-duration="6"
+      data-label="Temporal data boundary"
+      data-width="1920"
+      data-height="1080"
+      data-no-timeline
+    >
+      <div class="slide-shell">
+        <div class="kicker" data-anim>DATA CONTRACT</div>
+        <h2 data-anim>25 million ratings become a leakage-safe temporal split.</h2>
+        <div class="split-grid" data-anim>
+          <div class="split-part train">
+            <span>TRAIN · ≤ cutoff</span>
+            <strong>19,986,521</strong>
+            <small>79.95% · features learned here</small>
+          </div>
+          <div class="split-part">
+            <span>VALIDATION</span>
+            <strong>2,501,547</strong>
+            <small>10.01% · model selection</small>
+          </div>
+          <div class="split-part">
+            <span>TEST</span>
+            <strong>2,512,027</strong>
+            <small>10.05% · final evaluation</small>
+          </div>
+        </div>
+        <div class="timeline-rule" data-anim>Feature cutoff · 22 June 2016 05:34:47 UTC</div>
+        <div class="slide-number">02 / 12</div>
+        <div class="source">README · DATA_CONTRACT.md</div>
+      </div>
+    </section>
+
+    <section
+      id="scene-architecture"
+      class="scene-frame clip"
+      data-composition-id="architecture"
+      data-start="12"
+      data-duration="6"
+      data-label="System architecture"
+      data-width="1920"
+      data-height="1080"
+      data-no-timeline
+    >
+      <div class="slide-shell">
+        <div class="kicker" data-anim>SYSTEM DESIGN</div>
+        <h2 data-anim>Two stages separate broad candidate recall from precise ranking.</h2>
+        <div class="architecture" data-anim>
+          <div class="arch-node"><span class="index">01</span><h3>Spark</h3><p>clean + temporal split</p></div>
+          <div class="arch-node"><span class="index">02</span><h3>Features</h3><p>users, items, genres</p></div>
+          <div class="arch-node"><span class="index">03</span><h3>Two tower</h3><p>64-D embeddings</p></div>
+          <div class="arch-node"><span class="index">04</span><h3>FAISS</h3><p>top 200 candidates</p></div>
+          <div class="arch-node"><span class="index">05</span><h3>DCN / W&amp;D</h3><p>contextual re-rank</p></div>
+          <div class="arch-node"><span class="index">06</span><h3>FastAPI</h3><p>cache + feedback</p></div>
+        </div>
+        <div class="architecture-band" data-anim>
+          <strong>AIRFLOW</strong>
+          <span>orchestrates existing reproducible commands and validates every artifact boundary</span>
+        </div>
+        <div class="slide-number">03 / 12</div>
+      </div>
+    </section>
+
+    <section
+      id="scene-retrieval"
+      class="scene-frame clip"
+      data-composition-id="retrieval"
+      data-start="18"
+      data-duration="6"
+      data-label="Retrieval scale"
+      data-width="1920"
+      data-height="1080"
+      data-no-timeline
+    >
+      <div class="slide-shell">
+        <div class="kicker" data-anim>RETRIEVAL</div>
+        <h2 data-anim>A 64-dimensional user vector reduces 24,728 items to 200 candidates.</h2>
+        <div class="retrieval-stage" data-anim>
+          <div class="retrieval-box">
+            <span>Known users</span>
+            <strong>137,622</strong>
+            <p>Coverage-preserving training vocabulary</p>
+          </div>
+          <div class="arrow">→</div>
+          <div class="retrieval-box primary">
+            <span>Exported item matrix</span>
+            <strong>24,728 × 64</strong>
+            <div class="matrix" aria-hidden="true">
+              <i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i><i style="--i:7"></i><i style="--i:8"></i><i style="--i:9"></i>
+              <i style="--i:2"></i><i style="--i:4"></i><i style="--i:6"></i><i style="--i:8"></i><i style="--i:3"></i><i style="--i:5"></i><i style="--i:7"></i><i style="--i:9"></i><i style="--i:1"></i>
+              <i style="--i:5"></i><i style="--i:7"></i><i style="--i:9"></i><i style="--i:2"></i><i style="--i:4"></i><i style="--i:6"></i><i style="--i:8"></i><i style="--i:1"></i><i style="--i:3"></i>
+            </div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="retrieval-box">
+            <span>Ranker input</span>
+            <strong>Top 200</strong>
+            <p>Inner-product similarity, seen-item filtering</p>
+          </div>
+        </div>
+        <div class="slide-number">04 / 12</div>
+        <div class="source">RETRIEVAL_CONTRACT.md</div>
+      </div>
+    </section>
+
+    <section
+      id="scene-faiss"
+      class="scene-frame clip"
+      data-composition-id="faiss"
+      data-start="24"
+      data-duration="6"
+      data-label="FAISS benchmark"
+      data-width="1920"
+      data-height="1080"
+      data-no-timeline
+    >
+      <div class="slide-shell">
+        <div class="kicker" data-anim>VECTOR SEARCH</div>
+        <h2 data-anim>At this catalog size, high-recall HNSW is roughly tied with exact search.</h2>
+        <div class="table-card" data-anim>
+          <div class="metric-row header"><span>Index</span><span>Recall@200</span><span>P50 ms</span><span>P95 ms</span><span>Queries/s</span></div>
+          <div class="metric-row"><strong>Exact Flat</strong><code>1.0000</code><code>0.2932</code><code>0.3196</code><code>3,622</code></div>
+          <div class="metric-row"><strong>HNSW · ef128</strong><code>0.9402</code><code>0.1824</code><code>0.2230</code><code>5,868</code></div>
+          <div class="metric-row best"><strong>HNSW · ef256</strong><code>0.9859</code><code>0.2839</code><code>0.3307</code><code>3,680</code></div>
+        </div>
+        <div class="callout" data-anim>
+          <p>500 seeded queries · K=200 · one CPU thread</p>
+          <strong>Measured trade-off, not hidden</strong>
+        </div>
+        <div class="slide-number">05 / 12</div>
+        <div class="source">faiss_metrics.json</div>
+      </div>
+    </section>
+
+    <section
+      id="scene-ranking"
+      class="scene-frame clip"
+      data-composition-id="ranking"
+      data-start="30"
+      data-duration="6"
+      data-label="Ranking comparison"
+      data-width="1920"
+      data-height="1080"
+      data-no-timeline
+    >
+      <div class="slide-shell">
+        <div class="kicker" data-anim>DEEP RANKING</div>
+        <h2 data-anim>DCN wins the ranking comparison by a small, reproducible margin.</h2>
+        <div class="ranking-layout" data-anim>
+          <div class="hf-catalog-animated-bar-chart">
+            <header>
+              <div><h3>Validation NDCG@10</h3><p>same 200 candidates · 500 users</p></div>
+              <strong>0.0753</strong>
+            </header>
+            <div class="rank-bars">
+              <div class="rank-bar"><span>Raw retrieval</span><div class="bar-track"><i style="--value:24%"></i></div><code>0.0178</code></div>
+              <div class="rank-bar"><span>Popularity</span><div class="bar-track"><i style="--value:94.7%"></i></div><code>0.0713</code></div>
+              <div class="rank-bar"><span>Wide &amp; Deep</span><div class="bar-track"><i style="--value:98.3%"></i></div><code>0.0740</code></div>
+              <div class="rank-bar leading"><span>DCN</span><div class="bar-track"><i style="--value:100%"></i></div><code>0.0753</code></div>
+            </div>
+          </div>
+          <aside class="selection-card">
+            <span>SELECTION RULE</span>
+            <strong>Future-validation NDCG@10</strong>
+            <p>Early stopping restores the best validation-AUC epoch before SavedModel export.</p>
+          </aside>
+        </div>
+        <div class="slide-number">06 / 12</div>
+        <div class="source">ranking_metrics.json</div>
+      </div>
+    </section>
+
+    <section
+      id="scene-serving"
+      class="scene-frame clip"
+      data-composition-id="serving"
+      data-start="36"
+      data-duration="6"
+      data-label="Serving path"
+      data-width="1920"
+      data-height="1080"
+      data-no-timeline
+    >
+      <div class="slide-shell">
+        <div class="kicker" data-anim>ONLINE SERVING</div>
+        <h2 data-anim>Serving stays available when the cache is missing or unavailable.</h2>
+        <div class="serving-flow" data-anim>
+          <div class="serve-node"><strong>01 · Request</strong><p>Known user or cold-start session profile</p></div>
+          <div class="arrow">→</div>
+          <div class="serve-node"><strong>02 · Compute</strong><p>Tower → FAISS → assigned ranker</p></div>
+          <div class="arrow">→</div>
+          <div class="serve-node"><strong>03 · Respond</strong><p>Versioned result + impression event</p></div>
+        </div>
+        <div class="latency-strip" data-anim>
+          <div class="latency-stat"><span>FIRST MISS</span><strong>374.10 ms</strong></div>
+          <div class="latency-stat"><span>WARM P50</span><strong>13.79 ms</strong></div>
+          <div class="latency-stat"><span>WARM P95</span><strong>15.62 ms</strong></div>
+        </div>
+        <div class="callout" data-anim>
+          <p>Warm benchmark used the deterministic in-memory TTL fallback.</p>
+          <strong>Redis failures are fail-open</strong>
+        </div>
+        <div class="slide-number">07 / 12</div>
+        <div class="source">serving_benchmark.json</div>
+      </div>
+    </section>
+
+    <section
+      id="scene-airflow"
+      class="scene-frame clip"
+      data-composition-id="airflow"
+      data-start="42"
+      data-duration="6"
+      data-label="Airflow orchestration"
+      data-width="1920"
+      data-height="1080"
+      data-no-timeline
+    >
+      <div class="slide-shell">
+        <div class="kicker" data-anim>ORCHESTRATION</div>
+        <h2 data-anim>Airflow turns ten reproducible commands into one validated retraining DAG.</h2>
+        <div class="dag" data-anim>
+          <div class="dag-node done">validate_raw</div>
+          <div class="dag-node done">prepare_data</div>
+          <div class="dag-node done">build_features</div>
+          <div class="dag-node done">prepare_retrieval</div>
+          <div class="dag-node done">train_retrieval</div>
+          <div class="dag-node done">build_index</div>
+          <div class="dag-node done">prepare_ranking</div>
+          <div class="dag-node done">train_ranking</div>
+          <div class="dag-node done">export_triton</div>
+          <div class="dag-node done">validate_serving</div>
+        </div>
+        <div class="dag-footer" data-anim>
+          <span>10 / 10 tasks successful</span>
+          <span>14 artifact checks</span>
+          <span>Airflow 3.3.2 · 05 Nov 2026</span>
+        </div>
+        <div class="slide-number">08 / 12</div>
+        <div class="source">DAY_10_REPORT.md</div>
+      </div>
+    </section>
+
+    <section
+      id="scene-validation"
+      class="scene-frame clip"
+      data-composition-id="validation"
+      data-start="48"
+      data-duration="6"
+      data-label="Validation status"
+      data-width="1920"
+      data-height="1080"
+      data-no-timeline
+    >
+      <div class="slide-shell">
+        <div class="kicker" data-anim>EVIDENCE</div>
+        <h2 data-anim>Core system proof is complete; live Triton remains explicitly optional.</h2>
+        <div class="validation-grid" data-anim>
+          <div class="validation-card"><span>DATA + FEATURES</span><strong>✓ Spark integration</strong></div>
+          <div class="validation-card"><span>RETRIEVAL + INDEX</span><strong>✓ Models + FAISS</strong></div>
+          <div class="validation-card"><span>RANKING</span><strong>✓ W&amp;D + DCN</strong></div>
+          <div class="validation-card"><span>SERVING</span><strong>✓ API + Redis</strong></div>
+          <div class="validation-card"><span>ORCHESTRATION</span><strong>✓ Live Airflow DAG</strong></div>
+          <div class="validation-card optional"><span>TRITON SERVER</span><strong>△ Optional live run</strong></div>
+        </div>
+        <div class="evidence-line" data-anim>
+          <span>Latest repository validation</span>
+          <strong>58 passed · 2 service-gated skips</strong>
+        </div>
+        <div class="slide-number">09 / 12</div>
+      </div>
+    </section>
+
+    <section
+      id="scene-ui"
+      class="scene-frame clip"
+      data-composition-id="ui"
+      data-start="54"
+      data-duration="6"
+      data-label="Model Observatory"
+      data-width="1920"
+      data-height="1080"
+      data-no-timeline
+    >
+      <div class="slide-shell">
+        <div class="kicker" data-anim>LIVE PRODUCT</div>
+        <h2 data-anim>The demo exposes the ranking path instead of hiding it.</h2>
+        <div class="browser-stage" data-anim>
+          <div class="browser-bar"><i></i><i></i><i></i><span class="browser-address">localhost:8000 · Recommender Lab</span></div>
+          <img src="assets/model-observatory.png" alt="Model Observatory recommendation interface showing ranked results and request trace" />
+        </div>
+        <div class="slide-number">10 / 12</div>
+      </div>
+    </section>
+
+    <section
+      id="scene-demo"
+      class="scene-frame clip"
+      data-composition-id="demo"
+      data-start="60"
+      data-duration="6"
+      data-label="Live demo plan"
+      data-width="1920"
+      data-height="1080"
+      data-no-timeline
+    >
+      <div class="slide-shell">
+        <div class="kicker" data-anim>DEMO RUNBOOK · 4 MINUTES</div>
+        <h2 data-anim>One demo proves personalization, fallback, feedback, and observability.</h2>
+        <div class="demo-grid" data-anim>
+          <div class="demo-step"><span class="step">01</span><h3>Known user</h3><p>Run user 42 and inspect the ranked top 10.</p></div>
+          <div class="demo-step"><span class="step">02</span><h3>Request trace</h3><p>Show tower → FAISS → DCN → response.</p></div>
+          <div class="demo-step"><span class="step">03</span><h3>Cold start</h3><p>Select genres and titles, then generate.</p></div>
+          <div class="demo-step"><span class="step">04</span><h3>Feedback</h3><p>Click a result and open A/B metrics.</p></div>
+        </div>
+        <div class="demo-cue" data-anim>Fallback: if a live service fails, use slide 10 and the committed API/Airflow evidence—do not improvise.</div>
+        <div class="slide-number">11 / 12</div>
+      </div>
+    </section>
+
+    <section
+      id="scene-close"
+      class="scene-frame clip"
+      data-composition-id="close"
+      data-start="66"
+      data-duration="6"
+      data-label="Conclusion"
+      data-width="1920"
+      data-height="1080"
+      data-no-timeline
+    >
+      <div class="slide-shell">
+        <div class="kicker" data-anim>CONCLUSION</div>
+        <h1 data-anim>The result is a reproducible recommender system—<span class="accent">not a notebook prototype.</span></h1>
+        <div class="closing-grid" data-anim>
+          <div class="closing-card"><span>01 · REPRODUCIBLE</span><h3>Time-safe data and versioned artifacts</h3><p>Every stage has a deterministic command and an explicit contract.</p></div>
+          <div class="closing-card"><span>02 · MEASURED</span><h3>Quality and latency trade-offs are visible</h3><p>Weak results and limitations are reported rather than hidden.</p></div>
+          <div class="closing-card"><span>03 · OPERABLE</span><h3>Serving, feedback, and orchestration work together</h3><p>The system can be demonstrated, tested, and extended.</p></div>
+        </div>
+        <div class="slide-number">12 / 12</div>
+      </div>
+    </section>
+
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+        var root = gsap.timeline({ paused: true });
+        root.to({}, { duration: 72 });
+        window.__timelines.root = root;
+
+        var scenes = [
+          { elementId: "scene-cover", id: "cover", start: 0, duration: 6 },
+          { elementId: "scene-data", id: "data", start: 6, duration: 6 },
+          { elementId: "scene-architecture", id: "architecture", start: 12, duration: 6 },
+          { elementId: "scene-retrieval", id: "retrieval", start: 18, duration: 6 },
+          { elementId: "scene-faiss", id: "faiss", start: 24, duration: 6 },
+          { elementId: "scene-ranking", id: "ranking", start: 30, duration: 6 },
+          { elementId: "scene-serving", id: "serving", start: 36, duration: 6 },
+          { elementId: "scene-airflow", id: "airflow", start: 42, duration: 6 },
+          { elementId: "scene-validation", id: "validation", start: 48, duration: 6 },
+          { elementId: "scene-ui", id: "ui", start: 54, duration: 6 },
+          { elementId: "scene-demo", id: "demo", start: 60, duration: 6 },
+          { elementId: "scene-close", id: "close", start: 66, duration: 6 }
+        ];
+
+        function updateVisibility(time) {
+          scenes.forEach(function (scene) {
+            var element = document.getElementById(scene.elementId);
+            var active = time >= scene.start && time < scene.start + scene.duration;
+            element.style.opacity = active ? "1" : "0";
+            element.style.visibility = active ? "visible" : "hidden";
+            element.style.pointerEvents = active ? "auto" : "none";
+          });
+        }
+
+        window.__hfSetTime = updateVisibility;
+        updateVisibility(0);
+        root.eventCallback("onUpdate", function () {
+          updateVisibility(root.time());
+        });
+
+        function postTimeline() {
+          parent.postMessage(
+            {
+              source: "hf-preview",
+              type: "timeline",
+              durationInFrames: 2160,
+              scenes: scenes.map(function (scene) {
+                return { id: scene.id, start: scene.start, duration: scene.duration };
+              })
+            },
+            "*"
+          );
+        }
+
+        if (document.readyState === "complete") {
+          setTimeout(postTimeline, 300);
+        } else {
+          window.addEventListener("load", function () {
+            setTimeout(postTimeline, 300);
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -65,10 +65,21 @@ function showToast(message) {
 }
 
 async function api(path, options = {}) {
-  const response = await fetch(path, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options,
-  });
+  if (window.RecsysPortfolio?.active) {
+    return window.RecsysPortfolio.request(path, options);
+  }
+
+  let response;
+  try {
+    response = await fetch(path, {
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+      ...options,
+    });
+  } catch (error) {
+    if (!window.RecsysPortfolio) throw error;
+    window.RecsysPortfolio.activate();
+    return window.RecsysPortfolio.request(path, options);
+  }
   if (!response.ok) {
     let detail = `Request failed (${response.status})`;
     try {
@@ -78,6 +89,11 @@ async function api(path, options = {}) {
       // Keep the HTTP fallback when a response is not JSON.
     }
     throw new Error(detail);
+  }
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json") && window.RecsysPortfolio) {
+    window.RecsysPortfolio.activate();
+    return window.RecsysPortfolio.request(path, options);
   }
   return response.json();
 }
@@ -102,6 +118,7 @@ function setError(error, retryView = state.activeView) {
 
 function systemRibbon() {
   const health = state.health || {};
+  const portfolio = Boolean(window.RecsysPortfolio?.active);
   const cacheHealthy = Boolean(health.cache_healthy);
   const inferenceReady = Boolean(health.inference?.ready);
   return `
@@ -116,11 +133,11 @@ function systemRibbon() {
       </div>
       <div class="system-stat">
         <span>Feature cache</span>
-        <strong><i class="status-dot ${cacheHealthy ? "" : "warn"}"></i>${cacheHealthy ? "Redis healthy" : "Memory fallback"}</strong>
+        <strong><i class="status-dot ${cacheHealthy || portfolio ? "" : "warn"}"></i>${portfolio ? "Browser-local" : cacheHealthy ? "Redis healthy" : "Memory fallback"}</strong>
       </div>
       <div class="system-stat">
         <span>Inference</span>
-        <strong><i class="status-dot ${inferenceReady ? "" : "warn"}"></i>${escapeHtml(inferenceName())} · ${inferenceReady ? "ready" : "fallback"}</strong>
+        <strong><i class="status-dot ${inferenceReady ? "" : "warn"}"></i>${portfolio ? "SNAPSHOT" : escapeHtml(inferenceName())} · ${inferenceReady ? "ready" : "fallback"}</strong>
       </div>
     </section>`;
 }
@@ -295,7 +312,7 @@ function renderForYou() {
       <section class="panel main-panel">
         <header class="page-heading">
           <div>
-            <span class="eyebrow">ONLINE INFERENCE</span>
+            <span class="eyebrow">${window.RecsysPortfolio?.active ? "VALIDATED INFERENCE SNAPSHOT" : "ONLINE INFERENCE"}</span>
             <h1>Recommendations</h1>
             <p>Inspect retrieval, ranking, and serving context for a MovieLens user.</p>
           </div>
@@ -440,7 +457,7 @@ function renderDiscover() {
           <p class="section-copy">Active features sent to the cold-start endpoint.</p>
           <div class="profile-lines">${profileSignals()}</div>
           <button class="primary-button" id="generate-cold" type="button">GENERATE TOP 10 →</button>
-          <p class="helper-note">POST /recommendations/cold-start</p>
+          <p class="helper-note">${window.RecsysPortfolio?.active ? "Browser-local cold-start simulation" : "POST /recommendations/cold-start"}</p>
         </aside>
       </section>
 
@@ -562,10 +579,10 @@ async function loadExperiments() {
           <div>
             <span class="eyebrow">EXPERIMENT · ranking-model-v1</span>
             <h1>A/B metrics</h1>
-            <p>Observed interactions recorded by this demo. These values are not MovieLens historical metrics.</p>
+            <p>${window.RecsysPortfolio?.active ? "Simulated browser-local interactions seeded from a portfolio fixture." : "Observed interactions recorded by this demo. These values are not MovieLens historical metrics."}</p>
           </div>
           <div class="status-tags">
-            <span class="tag green">EVENTS RECORDING</span>
+            <span class="tag green">${window.RecsysPortfolio?.active ? "BROWSER-LOCAL EVENTS" : "EVENTS RECORDING"}</span>
             <span class="tag">${hasTraffic ? "OBSERVED TRAFFIC" : "AWAITING CLICKS"}</span>
           </div>
         </header>

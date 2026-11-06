@@ -18,6 +18,7 @@ venv/
 .env
 .env.*
 !.env.example
+.wrangler/
 
 # IDE and operating-system files
 .idea/

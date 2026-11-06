@@ -9,6 +9,7 @@
     />
     <title>Recommender Lab · Model Observatory</title>
     <link rel="stylesheet" href="/styles.css" />
+    <script src="/portfolio.js" defer></script>
     <script src="/app.js" defer></script>
   </head>
   <body>
@@ -28,10 +29,15 @@
           <button type="button" data-view="experiments">A/B metrics</button>
         </nav>
 
-        <a class="api-link" href="/docs" target="_blank" rel="noreferrer">
+        <a class="api-link" id="api-link" href="/docs" target="_blank" rel="noreferrer">
           API docs <span aria-hidden="true">↗</span>
         </a>
       </header>
+
+      <aside class="portfolio-banner" id="portfolio-banner" hidden>
+        <span><strong>PORTFOLIO MODE</strong> · validated frozen responses · browser-local interactions</span>
+        <a href="https://github.com/AmeriMajd/large-scale-recommender" target="_blank" rel="noreferrer">Architecture + evidence ↗</a>
+      </aside>
 
       <main id="view" tabindex="-1" aria-live="polite">
         <section class="loading-state">

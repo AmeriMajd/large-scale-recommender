@@ -167,6 +167,12 @@ ranking, cold-start taste selection, click recording, and live A/B metrics.
 Open `http://127.0.0.1:8000/docs` for the interactive API contract, or run
 `make benchmark-serving` to reproduce the local miss/hit latency report.
 
+For a zero-backend portfolio deployment, the same interface can run in a
+clearly labelled static mode with validated frozen responses and browser-local
+interactions. See [Portfolio Deployment](docs/PORTFOLIO_DEPLOYMENT.md) for the
+Cloudflare Pages configuration and local verification command. The public demo
+is available at <https://large-scale-recommender.pages.dev>.
+
 For containerized infrastructure, copy `.env.example` to `.env`, then use
 `make infra-up`, `make test-redis`, and `make verify-triton`. The pinned Triton
 image is approximately 10.8 GB compressed, so plan the first pull accordingly.

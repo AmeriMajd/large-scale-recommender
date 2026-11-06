@@ -179,6 +179,36 @@ a:focus-visible {
   color: var(--cyan);
 }
 
+.portfolio-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 38px;
+  padding: 8px 28px;
+  border-bottom: 1px solid rgba(149, 132, 255, 0.34);
+  color: var(--text-soft);
+  background: linear-gradient(90deg, rgba(149, 132, 255, 0.14), rgba(85, 228, 232, 0.07));
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.025em;
+}
+
+.portfolio-banner[hidden] {
+  display: none;
+}
+
+.portfolio-banner strong {
+  color: var(--violet);
+  letter-spacing: 0.08em;
+}
+
+.portfolio-banner a {
+  color: var(--cyan);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 #view {
   min-height: calc(100vh - 72px);
 }

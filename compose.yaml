@@ -1,6 +1,38 @@
 name: large-scale-recommender
 
 services:
+  api:
+    build:
+      context: .
+    profiles: ["api"]
+    ports:
+      - "8000:8000"
+    environment:
+      RECSYS_API_HOST: 0.0.0.0
+      RECSYS_CONFIG: configs/dev.toml
+      RECSYS_INFERENCE_BACKEND: ${RECSYS_API_INFERENCE_BACKEND:-local}
+      RECSYS_REDIS_URL: redis://redis:6379/0
+      RECSYS_TRITON_HTTP_URL: http://triton:8000
+    volumes:
+      - ./artifacts:/opt/recommender/artifacts:ro
+      - ./data/processed:/opt/recommender/data/processed:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    restart: unless-stopped
+
   redis:
     image: redis:8.2.10-alpine
     command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]

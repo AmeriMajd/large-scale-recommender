@@ -1,0 +1,16 @@
+.git
+.github
+.venv
+.tools
+.airflow
+.pytest_cache
+.ruff_cache
+__pycache__
+*.py[cod]
+artifacts
+data
+docs
+notebooks
+presentation
+tests
+triton-models/*/1

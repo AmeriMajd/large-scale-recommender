@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -132,8 +133,8 @@ def main() -> None:
     app = create_app(build_default_engine(config))
     uvicorn.run(
         app,
-        host=config.serving.api_host,
-        port=config.serving.api_port,
+        host=os.getenv("RECSYS_API_HOST", config.serving.api_host),
+        port=int(os.getenv("RECSYS_API_PORT", config.serving.api_port)),
     )
 
 

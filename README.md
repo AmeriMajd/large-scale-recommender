@@ -1,9 +1,20 @@
 # Large-Scale Personalized Recommendation Engine
 
+[![CI](https://github.com/AmeriMajd/large-scale-recommender/actions/workflows/ci.yml/badge.svg)](https://github.com/AmeriMajd/large-scale-recommender/actions/workflows/ci.yml)
+[![Integration](https://github.com/AmeriMajd/large-scale-recommender/actions/workflows/integration.yml/badge.svg)](https://github.com/AmeriMajd/large-scale-recommender/actions/workflows/integration.yml)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 A production-style, two-stage movie recommendation system built with MovieLens
 25M. A TensorFlow Recommenders two-tower model retrieves a few hundred
 candidates, then a deep ranking model re-scores them to produce the final
 recommendations.
+
+**[Try the live portfolio demo](https://large-scale-recommender.pages.dev)** ·
+**[Read the model card](docs/MODEL_CARD.md)** ·
+**[View the API contract](docs/API_CONTRACT.md)**
+
+![Two-stage recommendation architecture](presentation/assets/large-scale-recommender-architecture.png)
 
 This repository is an internship project for the AI / Machine Learning
 specialization track. The goal is not only to train a model, but to demonstrate
@@ -64,10 +75,10 @@ debugging log, tests, exercises, and learning resources.
 | Recall@200 | 0.1349 | 0.1870 |
 | NDCG@200 | 0.0590 | 0.1028 |
 
-The ID-only development model does not yet beat popularity. That result is
-reported rather than hidden: Day 4 will use the exported `(24,728, 64)` item
-matrix to build and benchmark FAISS, then later experiments will add history,
-genre, and popularity features to the towers.
+The ID-only development model does not beat popularity. That result is reported
+rather than hidden. The exported `(24,728, 64)` item matrix drives the FAISS
+experiment below; adding history, genre, and popularity features to the towers
+is a future improvement.
 
 See [docs/RETRIEVAL_CONTRACT.md](docs/RETRIEVAL_CONTRACT.md) for model and
 evaluation semantics and [docs/DAY_03_REPORT.md](docs/DAY_03_REPORT.md) for the
@@ -119,9 +130,23 @@ load. See [docs/COLD_START_CACHE_CONTRACT.md](docs/COLD_START_CACHE_CONTRACT.md)
 [docs/DAY_06_REPORT.md](docs/DAY_06_REPORT.md), and
 [docs/DAY_07_REPORT.md](docs/DAY_07_REPORT.md).
 
-## Data and feature quick start
+## Quick start
 
-Run these commands from the repository root:
+The default `configs/dev.toml` profile reproduces the bounded development
+experiments. It still processes the complete MovieLens 25M input, so allow at
+least 8 GB RAM, 20 GB of free disk space, and several hours for the end-to-end
+CPU workflow. The uncapped `configs/full.toml` profile is substantially more
+expensive and is intended for a machine with at least 16 GB RAM.
+
+For a fast repository check without downloading data or training models:
+
+```bash
+make setup
+make check-fast
+```
+
+For the end-to-end development experiment, run these commands from the
+repository root:
 
 ```bash
 make setup
@@ -141,6 +166,16 @@ make train-ranking
 make export-triton
 make validate-pipeline
 make test
+```
+
+To use every eligible positive interaction and expand evaluation instead of
+the bounded development sample, append `CONFIG=configs/full.toml` to a Make
+target, or export it for a sequence:
+
+```bash
+export RECSYS_CONFIG=configs/full.toml
+make prepare-retrieval CONFIG="$RECSYS_CONFIG"
+make train-retrieval CONFIG="$RECSYS_CONFIG"
 ```
 
 The commands create isolated Python 3.11 and Java 17 runtimes, download MovieLens
@@ -177,6 +212,9 @@ For containerized infrastructure, copy `.env.example` to `.env`, then use
 `make infra-up`, `make test-redis`, and `make verify-triton`. The pinned Triton
 image is approximately 10.8 GB compressed, so plan the first pull accordingly.
 Run `make airflow-test` to execute the DAG in its isolated Airflow container.
+
+After local model, index, and feature artifacts exist, `make demo-up` builds the
+FastAPI image and starts it with Redis. Use `make demo-down` to stop the stack.
 
 To understand the inputs and leakage controls before running the pipeline, read
 [docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md).
@@ -219,7 +257,7 @@ The complete design, schedule, evaluation plan, and learning roadmap are in
 └── triton-models/       # Triton model repository definitions
 ```
 
-## Planned technology
+## Technology stack
 
 - Python 3.11
 - Apache Spark / PySpark
@@ -241,6 +279,17 @@ runtime.
 The project uses [MovieLens 25M](https://grouplens.org/datasets/movielens/25m/),
 which contains 25,000,095 ratings and 1,093,360 tag applications across 62,423
 movies from 162,541 users. Raw data must not be committed to Git.
+
+## Testing
+
+`make check-fast` runs Ruff and the unit suite. `make test-integration` runs the
+local integration suite; Redis and Triton acceptance tests remain explicitly
+service-gated. GitHub Actions runs fast checks on every change and the heavier
+Spark/TensorFlow/Redis suite weekly or on demand.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and
+[SECURITY.md](SECURITY.md) for private vulnerability reporting and deployment
+scope.
 
 ## Project principles
 

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=69", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,8 +7,16 @@ name = "large-scale-recommender"
 version = "0.1.0"
 description = "A production-style two-stage personalized recommendation engine"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11,<3.13"
 dependencies = []
+
+[project.urls]
+Homepage = "https://large-scale-recommender.pages.dev"
+Repository = "https://github.com/AmeriMajd/large-scale-recommender"
+Documentation = "https://github.com/AmeriMajd/large-scale-recommender/tree/main/docs"
+Issues = "https://github.com/AmeriMajd/large-scale-recommender/issues"
 
 [project.optional-dependencies]
 data = [
@@ -17,6 +25,7 @@ data = [
 retrieval = [
   "pyarrow==22.0.0",
   "tensorflow==2.21.0",
+  "tf-keras==2.21.0",
   "tensorflow-recommenders==0.7.7",
 ]
 indexing = [
@@ -28,8 +37,22 @@ serving = [
   "redis==8.1.0",
   "uvicorn==0.54.0",
 ]
+all = [
+  "pyspark==4.0.1",
+  "pyarrow==22.0.0",
+  "tensorflow==2.21.0",
+  "tf-keras==2.21.0",
+  "tensorflow-recommenders==0.7.7",
+  "faiss-cpu==1.15.1",
+  "fastapi==0.121.0",
+  "httpx==0.28.1",
+  "redis==8.1.0",
+  "uvicorn==0.54.0",
+]
 dev = [
+  "pip-tools==7.6.2",
   "pytest>=8,<9",
+  "pytest-cov>=6,<8",
   "ruff>=0.9,<1",
 ]
 
@@ -54,6 +77,17 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+markers = [
+  "external: requires a separately running infrastructure service",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["recommender"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
 
 [tool.ruff]
 line-length = 88

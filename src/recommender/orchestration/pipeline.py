@@ -143,7 +143,11 @@ def run_stage(stage_id: str, mode: str, project_root: Path) -> list[Path]:
         raise ValueError("pipeline mode must be validate or full")
     stage = STAGE_BY_ID[stage_id]
     if mode == "full" and stage.make_target is not None:
-        subprocess.run(["make", stage.make_target], cwd=project_root, check=True)
+        subprocess.run(
+            ["make", stage.make_target, "CONFIG=configs/full.toml"],
+            cwd=project_root,
+            check=True,
+        )
     return validate_outputs(stage, project_root)
 
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -89,10 +90,12 @@ class RetrievalConfig:
             raise ValueError("learning_rate must be positive")
         if not self.evaluation_ks or min(self.evaluation_ks) <= 0:
             raise ValueError("evaluation_ks must contain positive integers")
-        if self.sampling_modulus <= 1:
-            raise ValueError("sampling_modulus must be greater than one")
-        if not 0 < self.sampling_buckets < self.sampling_modulus:
-            raise ValueError("sampling_buckets must be between zero and the modulus")
+        if self.sampling_modulus < 1:
+            raise ValueError("sampling_modulus must be at least one")
+        if not 0 < self.sampling_buckets <= self.sampling_modulus:
+            raise ValueError(
+                "sampling_buckets must be between one and the modulus"
+            )
 
 
 @dataclass(frozen=True)
@@ -236,11 +239,34 @@ class ProjectConfig:
     spark: SparkConfig
 
 
-def load_config(path: str | Path = "configs/base.toml") -> ProjectConfig:
-    """Load and validate project configuration from a TOML file."""
-    config_path = Path(path)
-    with config_path.open("rb") as file:
+def _merge_config(base: dict, overrides: dict) -> dict:
+    merged = dict(base)
+    for key, value in overrides.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _merge_config(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def _load_raw_config(path: Path, seen: frozenset[Path] = frozenset()) -> dict:
+    resolved = path.resolve()
+    if resolved in seen:
+        raise ValueError(f"Configuration inheritance cycle at {path}")
+    with path.open("rb") as file:
         raw = tomllib.load(file)
+    parent = raw.pop("extends", None)
+    if parent is None:
+        return raw
+    parent_path = path.parent / parent
+    base = _load_raw_config(parent_path, seen | {resolved})
+    return _merge_config(base, raw)
+
+
+def load_config(path: str | Path | None = None) -> ProjectConfig:
+    """Load and validate project configuration from a TOML file."""
+    config_path = Path(path or os.getenv("RECSYS_CONFIG", "configs/dev.toml"))
+    raw = _load_raw_config(config_path)
 
     split = SplitConfig(**raw["split"])
     split.validate()

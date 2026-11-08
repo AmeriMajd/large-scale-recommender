@@ -1,0 +1,20 @@
+# Full-data profile. This removes the development sampling and evaluation caps.
+# Expect substantially higher runtime, memory use, and artifact storage.
+extends = "base.toml"
+
+[retrieval]
+max_train_interactions = 19986521
+max_validation_users = 162541
+sampling_modulus = 1
+sampling_buckets = 1
+
+[indexing]
+query_count = 10000
+
+[ranking]
+max_training_positives = 19986521
+max_validation_users = 162541
+
+[spark]
+shuffle_partitions = 256
+driver_memory = "12g"

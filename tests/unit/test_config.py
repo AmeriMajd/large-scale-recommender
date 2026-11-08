@@ -29,6 +29,19 @@ def test_load_config_reads_expected_values() -> None:
     assert config.serving.experiment_id == "ranking-model-v1"
 
 
+def test_config_profiles_inherit_base_and_full_removes_sampling_cap() -> None:
+    development = load_config(Path("configs/dev.toml"))
+    full = load_config(Path("configs/full.toml"))
+
+    assert development.retrieval.max_train_interactions == 2_000_000
+    assert development.retrieval.sampling_buckets == 1
+    assert development.retrieval.sampling_modulus == 10
+    assert full.retrieval.max_train_interactions == 19_986_521
+    assert full.retrieval.sampling_buckets == full.retrieval.sampling_modulus == 1
+    assert full.ranking.max_training_positives == 19_986_521
+    assert full.spark.driver_memory == "12g"
+
+
 @pytest.mark.parametrize(
     ("recent_window_days", "popularity_buckets", "message"),
     [(0, 10, "recent_window_days"), (90, 1, "popularity_buckets")],

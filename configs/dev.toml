@@ -1,0 +1,2 @@
+# Bounded development profile used by default and for the reported experiments.
+extends = "base.toml"
